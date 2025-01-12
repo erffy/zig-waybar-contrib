@@ -2,7 +2,7 @@
 > I am new to Zig, so some modules may take a long time to add/update. I would appreciate your help 🥰.
 
 # zig-waybar-contrib
-A collection of high-performance Waybar modules written in Zig, designed specifically for Arch Linux systems.
+A collection of high-performance Waybar modules written in Zig.
 
 ## Overview
 `zig-waybar-contrib` provides efficient, lightweight modules for [Waybar](https://github.com/Alexays/Waybar) by leveraging the performance and safety features of [Zig](https://ziglang.org/). These modules are optimized and focus on system monitoring and status reporting.
