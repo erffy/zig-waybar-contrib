@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> I am new to Zig, so some modules may take a long time to add/update. I would appreciate your help 🥰.
+> I'm new to Zig, so some modules may take a long time to add/update. I would appreciate your help 🥰.
 
 # zig-waybar-contrib
 A collection of high-performance Waybar modules written in Zig.
