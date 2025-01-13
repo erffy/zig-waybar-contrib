@@ -16,34 +16,13 @@ A collection of high-performance Waybar modules written in Zig.
 - All modules write a single line json output.
 - All modules are compiled with LTO and ReleaseFast optimizations. See the [build](./build.zig) file for details.
 
-### Updates Module
-Tracks available system updates on Arch Linux
-- Status: ✅ Implemented
-- Dependencies: `pacman-contrib`, `fakeroot`
-- Note: Compatible only with Arch-based distributions
-
-### GPU Module
-Monitors GPU statistics and performance
-- Status: ✅ Implemented | ⚠️ Partially Working
-- Known Issues: Path resolution errors may affect functionality
-- Supports: AMD GPUs (RX series)
-
-### Memory Module
-Tracks system memory usage and statistics
-- Status: ✅ Implemented
-- Features: Real-time memory monitoring
-- Displays: Used/Total memory, usage percentage
-
-### Ping Module
-Network latency monitoring
-- Status: ✅ Implemented
-- Features: Configurable ping targets
-- Displays: Current network latency
-
-### CPU Module
-CPU usage and temperature monitoring
-- Status: 🚧 In Development
-- Planned Features: Usage percentage, temperature, frequency
+| Module  | Description                               | Status                          | Dependencies                  | Known Issues                                    | Supports               |
+|---------|-------------------------------------------|---------------------------------|-------------------------------|-------------------------------------------------|------------------------|
+| Updates | Tracks available system updates           | ✅ Implemented                  | `pacman-contrib`, `fakeroot`  | Compatible only with Arch-based distributions   |                        |
+| GPU     | Monitors GPU statistics and performance   | ✅ Implemented                  |                               | Path resolution errors may affect functionality | AMD GPUs (RX series)   |
+| Memory  | Tracks system memory usage and statistics | ✅ Implemented                  |                               |                                                 |                        |
+| Ping    | Network latency monitoring                | ✅ Implemented                  |                               |                                                 |                        |
+| CPU     | CPU usage and temperature monitoring      | 🚧 In Development               |                               |                                                 |                        |
 
 ## Installation
 - Download the latest release from the [GitHub Releases](https://github.com/erffy/zig-waybar-contrib/releases)
