@@ -44,45 +44,29 @@ inline fn parseFloat(content: []const u8) f64 {
     };
 }
 
-inline fn findPath(base_paths: []const []const u8) ![]const u8 {
-    for (base_paths) |path| {
-        const file = fs.cwd().openFile(path, .{}) catch continue;
-        defer file.close();
-        return try heap.page_allocator.dupe(u8, path);
-    }
-    return error.PathNotFound;
-}
+noinline fn getGPUInfo() !GPUInfo {
+    const base_hwmon = "/sys/class/hwmon/hwmon2"; // TODO: Implement autodetection of the correct hwmon path by scanning /sys/class/hwmon/ and selecting the relevant sensor files based on available hardware.
 
-noinline fn getGPUInfo(allocator: mem.Allocator) !GPUInfo {
-    const base_device = "/sys/class/hwmon/hwmon2/device";
-    const base_hwmon = "/sys/class/hwmon/hwmon2";
+    const paths = comptime blk: {
+        const base_paths = .{
+            "/device/mem_info_vram_total",
+            "/device/mem_info_vram_used",
+            "/temp1_input",
+            "/device/gpu_busy_percent",
+            "/device/mem_busy_percent",
+        };
 
-    const mem_total_path = try fmt.allocPrint(allocator, "{s}/mem_info_vram_total", .{base_device});
-    defer allocator.free(mem_total_path);
-    const memory_total_raw = try readSysFile(mem_total_path);
-    const memory_total = parseNumber(memory_total_raw);
+        var full_paths: [base_paths.len][]const u8 = undefined;
+        for (base_paths, 0..) |path, i| full_paths[i] = base_hwmon ++ path;
 
-    const mem_used_path = try fmt.allocPrint(allocator, "{s}/mem_info_vram_used", .{base_device});
-    defer allocator.free(mem_used_path);
-    const memory_used_raw = try readSysFile(mem_used_path);
-    const memory_used = parseNumber(memory_used_raw);
+        break :blk full_paths;
+    };
 
-    const temperature_path = try fmt.allocPrint(allocator, "{s}/temp1_input", .{base_hwmon});
-    defer allocator.free(temperature_path);
-    const temperature_raw = try readSysFile(temperature_path);
-    const temperature = parseFloat(temperature_raw) / 1000.0;
-
-    const gpu_busy_path = try fmt.allocPrint(allocator, "{s}/gpu_busy_percent", .{base_device});
-    defer allocator.free(gpu_busy_path);
-
-    const gpu_busy_raw = try readSysFile(gpu_busy_path);
-    const gpu_busy_percent = parseNumber(gpu_busy_raw);
-
-    const mem_busy_path = try fmt.allocPrint(allocator, "{s}/mem_busy_percent", .{base_device});
-    defer allocator.free(mem_busy_path);
-
-    const mem_busy_raw = try readSysFile(mem_busy_path);
-    const memory_busy_percent = parseNumber(mem_busy_raw);
+    const memory_total = parseNumber(try readSysFile(paths[0]));
+    const memory_used = parseNumber(try readSysFile(paths[1]));
+    const temperature = parseFloat(try readSysFile(paths[2])) / 1000.0;
+    const gpu_busy_percent = parseNumber(try readSysFile(paths[3]));
+    const memory_busy_percent = parseNumber(try readSysFile(paths[4]));
 
     return GPUInfo{
         .memory_total = memory_total,
@@ -119,13 +103,9 @@ inline fn fmtSize(size: u64) FmtSize {
 }
 
 pub fn main() !void {
-    var gpa = heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    const gpu_info = try getGPUInfo();
 
     var bw = io.bufferedWriter(io.getStdOut().writer());
-
-    const gpu_info = try getGPUInfo(allocator);
 
     try bw.writer().print("{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"Memory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}", .{
         gpu_info.gpu_busy_percent,
