@@ -6,9 +6,9 @@ const io = std.io;
 const time = std.time;
 const heap = std.heap;
 
-const PingResult = struct {
-    latency: ?i64,
-    error_message: ?[]const u8,
+const PingError = error{
+    Timeout,
+    NetworkError,
 };
 
 const TARGET = "8.8.8.8";
@@ -19,31 +19,28 @@ inline fn calculateChecksum(data: []const u8) u16 {
     var sum: u32 = 0;
     var i: usize = 0;
 
-    while (i + 1 < data.len) : (i += 2) sum += @as(u16, data[i]) << 8 | data[i + 1];
+    while (i + 3 < data.len) : (i += 4) sum += @as(u32, data[i]) << 24 |
+        @as(u32, data[i + 1]) << 16 |
+        @as(u32, data[i + 2]) << 8 |
+        data[i + 3];
 
-    if (i < data.len) sum += @as(u16, data[i]) << 8;
-
-    sum = (sum >> 16) + (sum & 0xFFFF);
-    sum += (sum >> 16);
+    while (i < data.len) : (i += 1) sum += @as(u32, data[i]) << @as(u5, @intCast((data.len - i - 1) * 8));
+    while (sum >> 16 != 0) sum = (sum & 0xFFFF) + (sum >> 16);
 
     return ~@as(u16, @truncate(sum));
 }
 
-inline fn createIcmpPacket(allocator: mem.Allocator) ![]u8 {
-    var packet = try allocator.alloc(u8, PACKET_SIZE);
-    @memset(packet, 0);
-
-    packet[0] = 8;
-    packet[1] = 0;
-
-    const cs = calculateChecksum(packet);
-    packet[2] = @as(u8, @truncate(cs >> 8));
-    packet[3] = @as(u8, @truncate(cs & 0xFF));
-
-    return packet;
+inline fn createIcmpPacket(buffer: []u8) void {
+    @memset(buffer, 0);
+    buffer[0] = 8;
+    buffer[1] = 0;
+    
+    const cs = calculateChecksum(buffer);
+    buffer[2] = @as(u8, @truncate(cs >> 8));
+    buffer[3] = @as(u8, @truncate(cs & 0xFF));
 }
 
-noinline fn ping(allocator: mem.Allocator, ip_address: []const u8) !PingResult {
+noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     const socket = try posix.socket(posix.AF.INET, posix.SOCK.DGRAM, posix.IPPROTO.ICMP);
     defer posix.close(socket);
 
@@ -56,35 +53,32 @@ noinline fn ping(allocator: mem.Allocator, ip_address: []const u8) !PingResult {
 
     const addr = try net.Address.parseIp4(ip_address, 0);
 
-    const packet = try createIcmpPacket(allocator);
-    defer allocator.free(packet);
-
     const start_time = time.milliTimestamp();
-
-    _ = try posix.sendto(socket, packet, 0, &addr.any, addr.getOsSockLen());
-
-    var recv_buffer = [_]u8{0} ** PACKET_SIZE;
-    _ = try posix.recvfrom(socket, &recv_buffer, 0, null, null);
+    
+    _ = try posix.sendto(socket, buffer, 0, &addr.any, addr.getOsSockLen());
+    _ = try posix.recvfrom(socket, buffer, 0, null, null);
 
     const latency = time.milliTimestamp() - start_time;
-
-    return PingResult{ .latency = if (latency >= 0 and latency <= TIMEOUT_MS) latency else null, .error_message = null };
+    return if (latency >= 0 and latency <= TIMEOUT_MS) latency else PingError.Timeout;
 }
 
 pub fn main() !void {
-    var gpa = heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    var buffer: [PACKET_SIZE]u8 = undefined;
 
     var bw = io.bufferedWriter(io.getStdOut().writer());
+    const writer = bw.writer();
 
-    const result = try ping(allocator, TARGET);
+    createIcmpPacket(&buffer);
 
-    if (result.latency) |latency| {
-        try bw.writer().print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}", .{ latency, TARGET });
-    } else {
-        try bw.writer().print("{{\"text\":\"\", \"tooltip\":\"\", \"class\":\"hidden\"}}", .{});
-    }
+    const latency = ping(&buffer, TARGET) catch |err| switch (err) {
+        error.Timeout, error.NetworkError => {
+            try writer.print("{{\"text\":\"\", \"tooltip\":\"\", \"class\":\"hidden\"}}", .{});
+            try bw.flush();
+            return;
+        },
+        else => |e| return e,
+    };
 
+    try writer.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}", .{ latency, TARGET });
     try bw.flush();
 }

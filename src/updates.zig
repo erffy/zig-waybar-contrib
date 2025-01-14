@@ -6,7 +6,7 @@ const io = std.io;
 const sort = std.sort;
 const fs = std.fs;
 const ascii = std.ascii;
-const allocator = heap.page_allocator;
+const math = std.math;
 
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
@@ -18,24 +18,34 @@ const UpdateInfo = struct {
     new_version: [MAX_VERSION_LENGTH + 1]u8,
 };
 
-noinline fn escapeJson(input: []const u8, output: []u8) void {
-    const escape_chars = &[_]u8{ '"', '\\', '\n', '\r', '\t' };
-    const escape_replacements = &[_]u8{ '"', '\\', 'n', 'r', 't' };
-    var j: usize = 0;
+const ESCAPE_MAP = init: {
+    var map: [256]u8 = undefined;
+    for (0..256) |i| map[i] = @as(u8, @truncate(i));
 
+    map['"'] = '\\';
+    map['\\'] = '\\';
+    map['\n'] = 'n';
+    map['\r'] = 'r';
+    map['\t'] = 't';
+    break :init map;
+};
+
+inline fn escapeJson(input: []const u8, output: []u8) void {
+    var j: usize = 0;
     for (input) |char| {
         if (j >= output.len - 1) break;
 
-        if (mem.indexOfScalar(u8, escape_chars, char)) |esc_index| {
+        const escaped = ESCAPE_MAP[char];
+        if (escaped != char) {
             if (j + 2 >= output.len) break;
             output[j] = '\\';
             j += 1;
-            output[j] = escape_replacements[esc_index];
-        } else {
-            output[j] = char;
-        }
+            output[j] = escaped;
+        } else output[j] = char;
+
         j += 1;
     }
+
     output[j] = 0;
 }
 
@@ -44,13 +54,13 @@ fn compareUpdates(context: void, a: UpdateInfo, b: UpdateInfo) bool {
     return mem.lessThan(u8, &a.pkg_name, &b.pkg_name);
 }
 
-noinline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
+inline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
     const trimmed = mem.trim(u8, line, &ascii.whitespace);
     if (trimmed.len == 0) return false;
 
-    var parts = mem.split(u8, trimmed, "->");
-    const left_part = mem.trim(u8, parts.first(), &ascii.whitespace);
-    const new_version = mem.trim(u8, parts.rest(), &ascii.whitespace);
+    const arrow_idx = mem.indexOf(u8, trimmed, "->") orelse return false;
+    const left_part = mem.trim(u8, trimmed[0..arrow_idx], &ascii.whitespace);
+    const new_version = mem.trim(u8, trimmed[arrow_idx + 2 ..], &ascii.whitespace);
     if (new_version.len == 0) return false;
 
     const last_space = mem.lastIndexOf(u8, left_part, " ") orelse return false;
@@ -73,10 +83,17 @@ noinline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
 }
 
 pub fn main() !void {
-    const updates_output = try checkupdates();
-    defer if (updates_output.len > 0) allocator.free(updates_output);
+    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
-    var updates = [_]UpdateInfo{mem.zeroes(UpdateInfo)} ** MAX_UPDATES;
+    const updates_output = try checkupdates(allocator);
+    if (updates_output.len == 0) {
+        try io.getStdOut().writer().writeAll("{\"text\":\"\",\"tooltip\":\"You're up to date!\"}");
+        return;
+    }
+
+    var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
     var updates_count: usize = 0;
 
     var lines = mem.split(u8, updates_output, "\n");
@@ -89,39 +106,34 @@ pub fn main() !void {
 
     sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
 
-    var updates_str = std.ArrayList(u8).init(allocator);
-    defer updates_str.deinit();
+    var output_buffer = try allocator.alloc(u8, BUFFER_SIZE * MAX_UPDATES);
+    defer allocator.free(output_buffer);
+
+    var output_stream = io.fixedBufferStream(output_buffer);
+    const writer = output_stream.writer();
 
     for (updates[0..updates_count], 0..) |update, i| {
-        try updates_str.writer().print("{s:<25} {s} -> {s}\n", .{
+        try writer.print("{s:<25} {s} -> {s}\n", .{
             mem.sliceTo(&update.pkg_name, 0),
             mem.sliceTo(&update.local_version, 0),
             mem.sliceTo(&update.new_version, 0),
         });
 
         if (i == MAX_UPDATES - 1 and updates_count >= MAX_UPDATES) {
-            try updates_str.writer().writeAll("...");
+            try writer.writeAll("...");
             break;
         }
     }
 
-    if (updates_str.items.len > 0 and updates_str.items[updates_str.items.len - 1] == '\n') _ = updates_str.pop();
+    const written = output_stream.pos;
+    if (written > 0 and output_buffer[written - 1] == '\n') output_stream.pos -= 1;
 
-    var pkg_list_escaped = [_]u8{0} ** (BUFFER_SIZE * 10);
-    escapeJson(updates_str.items, &pkg_list_escaped);
+    const json_buffer = try allocator.alloc(u8, written * 2);
+    defer allocator.free(json_buffer);
+    escapeJson(output_buffer[0..output_stream.pos], json_buffer);
 
     var bw = io.bufferedWriter(io.getStdOut().writer());
-    const writer = bw.writer();
-
-    if (updates_count > 0) {
-        try writer.print("{{\"text\":\"\",\"tooltip\":\"{d} updates available.\\n\\n{s}\"}}", .{
-            updates_count,
-            mem.sliceTo(&pkg_list_escaped, 0)
-        });
-    } else {
-        try writer.print("{{\"text\":\"\",\"tooltip\":\"You're up to date!\"}}", .{});
-    }
-
+    try bw.writer().print("{{\"text\":\"\",\"tooltip\":\"{d} updates available.\\n\\n{s}\"}}", .{ updates_count, mem.sliceTo(json_buffer, 0) });
     try bw.flush();
 }
 
@@ -131,7 +143,7 @@ const CheckUpdatesError = error{
     CommandFailed,
 };
 
-noinline fn checkupdates() ![]u8 {
+noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
     const tmp_base = std.posix.getenv("TMPDIR") orelse "/var/tmp";
     const uid = std.posix.getenv("EUID") orelse "1000";
 
@@ -154,7 +166,7 @@ noinline fn checkupdates() ![]u8 {
         else => return err,
     };
 
-    const sync_result = try runCommand(&[_][]const u8{
+    const sync_result = try runCommand(allocator, &[_][]const u8{
         "fakeroot",
         "pacman",
         "-Sy",
@@ -169,7 +181,7 @@ noinline fn checkupdates() ![]u8 {
         return CheckUpdatesError.CannotFetchUpdates;
     }
 
-    const updates = try getUpdates(db_path);
+    const updates = try getUpdates(allocator, db_path);
     if (updates.len == 0) {
         fs.deleteTreeAbsolute(db_path) catch {};
         return &[_]u8{};
@@ -178,7 +190,7 @@ noinline fn checkupdates() ![]u8 {
     return updates;
 }
 
-noinline fn getUpdates(db_path: []const u8) ![]u8 {
+noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
     var child = process.Child.init(&[_][]const u8{
         "pacman",
         "-Qu",
@@ -191,8 +203,8 @@ noinline fn getUpdates(db_path: []const u8) ![]u8 {
 
     try child.spawn();
 
-    const stdout = try child.stdout.?.reader().readAllAlloc(allocator, std.math.maxInt(usize));
-    const stderr = try child.stderr.?.reader().readAllAlloc(allocator, std.math.maxInt(usize));
+    const stdout = try child.stdout.?.reader().readAllAlloc(allocator, math.maxInt(usize));
+    const stderr = try child.stderr.?.reader().readAllAlloc(allocator, math.maxInt(usize));
     defer allocator.free(stderr);
 
     const term = try child.wait();
@@ -212,7 +224,7 @@ noinline fn getUpdates(db_path: []const u8) ![]u8 {
     return lines.toOwnedSlice();
 }
 
-inline fn runCommand(argv: []const []const u8) !u8 {
+inline fn runCommand(allocator: mem.Allocator, argv: []const []const u8) !u8 {
     var child = process.Child.init(argv, allocator);
     child.stderr_behavior = .Ignore;
     child.stdout_behavior = .Ignore;

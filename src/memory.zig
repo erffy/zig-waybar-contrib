@@ -3,28 +3,35 @@ const fmt = std.fmt;
 const mem = std.mem;
 const io = std.io;
 const fs = std.fs;
+const math = std.math;
 
-const KILO: u64 = 1024;
-const MEGA: u64 = KILO * KILO;
-const GIGA: u64 = KILO * MEGA;
+const KILO: comptime_int = 1024;
+const MEGA: comptime_int = KILO * KILO;
+const GIGA: comptime_int = KILO * MEGA;
 
 const FmtSize = struct {
     size: u64,
 
     pub inline fn format(self: FmtSize, comptime frmt: []const u8, options: fmt.FormatOptions, writer: anytype) !void {
         const scaled_size = self.size * KILO;
-        return if (scaled_size >= GIGA) {
-            try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / GIGA, frmt, options, writer, 0);
-            try writer.writeByte('G');
-        } else if (scaled_size >= MEGA) {
-            try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / MEGA, frmt, options, writer, 0);
-            try writer.writeByte('M');
-        } else if (scaled_size >= KILO) {
-            try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / KILO, frmt, options, writer, 0);
-            try writer.writeByte('K');
-        } else {
-            try fmt.formatType(scaled_size, frmt, options, writer, 0);
-            try writer.writeByte('B');
+
+        return switch (scaled_size) {
+            GIGA...math.maxInt(u64) => {
+                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / GIGA, frmt, options, writer, 0);
+                try writer.writeByte('G');
+            },
+            MEGA...GIGA - 1 => {
+                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / MEGA, frmt, options, writer, 0);
+                try writer.writeByte('M');
+            },
+            KILO...MEGA - 1 => {
+                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / KILO, frmt, options, writer, 0);
+                try writer.writeByte('K');
+            },
+            else => {
+                try fmt.formatType(scaled_size, frmt, options, writer, 0);
+                try writer.writeByte('B');
+            },
         };
     }
 };
