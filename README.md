@@ -24,6 +24,23 @@ A collection of high-performance Waybar modules written in Zig.
 | Ping    | Network latency monitoring                | ✅ Implemented                  |                               |                                                 |                        |
 | CPU     | CPU usage and temperature monitoring      | 🚧 In Development               |                               |                                                 |                        |
 
+## Screenshots
+
+### Updates
+#### Update Available
+![](assets/updates_available.png)
+#### No Updates
+![](assets/updates_noupdate.png)
+
+### GPU
+![](assets/gpu.png)
+
+### Memory
+![](assets/memory.png)
+
+### Ping
+![](assets/ping.png)
+
 ## Installation
 - Download the latest release from the [GitHub Releases](https://github.com/erffy/zig-waybar-contrib/releases)
 
