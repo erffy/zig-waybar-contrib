@@ -82,25 +82,18 @@ const FmtSize = struct {
     size: u64,
 
     pub inline fn format(self: FmtSize, comptime frmt: []const u8, options: fmt.FormatOptions, writer: anytype) !void {
-        const scaled_size = self.size * KILO;
-
-        return switch (scaled_size) {
-            GIGA...math.maxInt(u64) => {
-                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / GIGA, frmt, options, writer, 0);
-                try writer.writeByte('G');
-            },
-            MEGA...GIGA - 1 => {
-                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / MEGA, frmt, options, writer, 0);
-                try writer.writeByte('M');
-            },
-            KILO...MEGA - 1 => {
-                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / KILO, frmt, options, writer, 0);
-                try writer.writeByte('K');
-            },
-            else => {
-                try fmt.formatType(scaled_size, frmt, options, writer, 0);
-                try writer.writeByte('B');
-            },
+        return if (self.size >= GIGA) {
+            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / GIGA, frmt, options, writer, 0);
+            try writer.writeByte('G');
+        } else if (self.size >= MEGA) {
+            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / MEGA, frmt, options, writer, 0);
+            try writer.writeByte('M');
+        } else if (self.size >= KILO) {
+            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / KILO, frmt, options, writer, 0);
+            try writer.writeByte('K');
+        } else {
+            try fmt.formatType(self.size, frmt, options, writer, 0);
+            try writer.writeByte('B');
         };
     }
 };
