@@ -73,7 +73,7 @@ noinline fn getGPUInfo() !GPUInfo {
 
     const pwm_value = parseNumber(try readSysFile(paths[5]));
     const max_pwm_value = parseNumber(try readSysFile(paths[6]));
-    const pwm_percentage = (pwm_value / max_pwm_value) * 100;
+    const pwm_percentage = @as(u64, @intFromFloat((@as(f32, @floatFromInt(pwm_value)) / @as(f32, @floatFromInt(max_pwm_value))) * 100.0));
 
     return GPUInfo{
         .memory_total = memory_total,
