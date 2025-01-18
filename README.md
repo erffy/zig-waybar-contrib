@@ -22,7 +22,6 @@ A collection of high-performance Waybar modules written in Zig.
 | GPU     | Monitors GPU statistics and performance   | ✅ Implemented                  |                               | Path resolution errors may affect functionality | AMD GPUs (RX series)   |
 | Memory  | Tracks system memory usage and statistics | ✅ Implemented                  |                               |                                                 |                        |
 | Ping    | Network latency monitoring                | ✅ Implemented                  |                               |                                                 |                        |
-| CPU     | CPU usage and temperature monitoring      | 🚧 In Development               |                               |                                                 |                        |
 
 ## Screenshots
 
