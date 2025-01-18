@@ -17,6 +17,7 @@ const GPUInfo = struct {
     temperature: f64,
     gpu_busy_percent: u64,
     memory_busy_percent: u64,
+    pwm_percentage: u64,
 };
 
 inline fn readSysFile(path: []const u8) ![]const u8 {
@@ -54,6 +55,8 @@ noinline fn getGPUInfo() !GPUInfo {
             "/temp1_input",
             "/device/gpu_busy_percent",
             "/device/mem_busy_percent",
+            "/pwm1",
+            "/pwm1_max",
         };
 
         var full_paths: [base_paths.len][]const u8 = undefined;
@@ -68,6 +71,10 @@ noinline fn getGPUInfo() !GPUInfo {
     const gpu_busy_percent = parseNumber(try readSysFile(paths[3]));
     const memory_busy_percent = parseNumber(try readSysFile(paths[4]));
 
+    const pwm_value = parseNumber(try readSysFile(paths[5]));
+    const max_pwm_value = parseNumber(try readSysFile(paths[6]));
+    const pwm_percentage = (pwm_value / max_pwm_value) * 100;
+
     return GPUInfo{
         .memory_total = memory_total,
         .memory_used = memory_used,
@@ -75,6 +82,7 @@ noinline fn getGPUInfo() !GPUInfo {
         .temperature = temperature,
         .gpu_busy_percent = gpu_busy_percent,
         .memory_busy_percent = memory_busy_percent,
+        .pwm_percentage = pwm_percentage,
     };
 }
 
@@ -107,9 +115,10 @@ pub fn main() !void {
 
     var bw = io.bufferedWriter(io.getStdOut().writer());
 
-    try bw.writer().print("{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"Memory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}", .{
+    try bw.writer().print("{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d:.0}%\\n\\nMemory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}", .{
         gpu_info.gpu_busy_percent,
         gpu_info.temperature,
+        gpu_info.pwm_percentage,
         fmtSize(gpu_info.memory_total),
         fmtSize(gpu_info.memory_used),
         fmtSize(gpu_info.memory_free),
