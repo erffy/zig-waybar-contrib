@@ -96,7 +96,7 @@ pub fn main() !void {
     var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
     var updates_count: usize = 0;
 
-    var lines = mem.split(u8, updates_output, "\n");
+    var lines = mem.splitAny(u8, updates_output, "\n");
     while (lines.next()) |line| {
         if (updates_count >= MAX_UPDATES) break;
         if (line.len == 0) continue;
@@ -147,8 +147,8 @@ noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
     const tmp_base = std.posix.getenv("TMPDIR") orelse "/var/tmp";
     const uid = std.posix.getenv("EUID") orelse "1000";
 
-    var db_path_buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
-    var tmp_local_buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+    var db_path_buffer: [std.fs.max_path_bytes]u8 = undefined;
+    var tmp_local_buffer: [std.fs.max_path_bytes]u8 = undefined;
 
     const db_path = try std.fmt.bufPrint(&db_path_buffer, "{s}/checkup-db-{s}", .{ tmp_base, uid });
 
@@ -211,7 +211,7 @@ noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
     if (term != .Exited or term.Exited != 0 or stderr.len > 0) allocator.free(stdout);
 
     var lines = std.ArrayList(u8).init(allocator);
-    var iter = mem.split(u8, stdout, "\n");
+    var iter = mem.splitAny(u8, stdout, "\n");
     while (iter.next()) |line| {
         if (line.len == 0) continue;
         if (!mem.containsAtLeast(u8, line, 1, "[")) {

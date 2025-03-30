@@ -45,8 +45,8 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     defer posix.close(socket);
 
     const timeout = posix.timeval{
-        .tv_sec = @intCast(TIMEOUT_MS / 1000),
-        .tv_usec = @intCast((TIMEOUT_MS % 1000) * 1000),
+        .sec = @intCast(TIMEOUT_MS / 1000),
+        .usec = @intCast((TIMEOUT_MS % 1000) * 1000),
     };
 
     try posix.setsockopt(socket, posix.SOL.SOCKET, posix.SO.RCVTIMEO, mem.asBytes(&timeout));
