@@ -19,7 +19,7 @@ A collection of high-performance Waybar modules written in Zig.
 | Module  | Description                               | Status                          | Dependencies                  | Known Issues                                    | Supports               |
 |---------|-------------------------------------------|---------------------------------|-------------------------------|-------------------------------------------------|------------------------|
 | Updates | Tracks available system updates           | ✅ Implemented                  | `pacman-contrib`, `fakeroot`  | Compatible only with Arch-based distributions   |                        |
-| GPU     | Monitors GPU statistics and performance   | ✅ Implemented                  |                               | Path resolution errors may affect functionality | AMD GPUs (RX series)   |
+| GPU     | Monitors GPU statistics and performance   | ✅ Implemented                  |                               |                                                 | AMD GPUs (RX series)   |
 | Memory  | Tracks system memory usage and statistics | ✅ Implemented                  |                               |                                                 |                        |
 | Ping    | Network latency monitoring                | ✅ Implemented                  |                               |                                                 |                        |
 
