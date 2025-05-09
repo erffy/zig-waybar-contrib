@@ -4,7 +4,6 @@ const mem = std.mem;
 const fmt = std.fmt;
 const io = std.io;
 const debug = std.debug;
-const math = std.math;
 
 const KILO: u64 = 1024;
 const MEGA: u64 = KILO * KILO;
@@ -20,60 +19,86 @@ const GPUInfo = struct {
     pwm_percentage: u64,
 };
 
-inline fn readSysFile(path: []const u8) ![]const u8 {
+fn readSysFile(path: []const u8) ![]const u8 {
     const file = try fs.cwd().openFile(path, .{});
     defer file.close();
-
     var buffer: [4096]u8 = undefined;
     const bytes_read = try file.read(&buffer);
-    const content = buffer[0..bytes_read];
-
-    return mem.trim(u8, content, " \n");
+    return mem.trim(u8, buffer[0..bytes_read], " \n");
 }
 
-inline fn parseNumber(content: []const u8) u64 {
+fn parseNumber(content: []const u8) u64 {
     return fmt.parseInt(u64, content, 10) catch |err| blk: {
         debug.print("Number parsing error: {}\n", .{err});
         break :blk 0;
     };
 }
 
-inline fn parseFloat(content: []const u8) f64 {
+fn parseFloat(content: []const u8) f64 {
     return fmt.parseFloat(f64, content) catch |err| blk: {
         debug.print("Float parsing error: {}\n", .{err});
         break :blk 0.0;
     };
 }
 
-noinline fn getGPUInfo() !GPUInfo {
-    const base_hwmon = "/sys/class/hwmon/hwmon2"; // TODO: Implement autodetection of the correct hwmon path by scanning /sys/class/hwmon/ and selecting the relevant sensor files based on available hardware.
+// TODO: Handle multiple GPUs if present
+fn detectHwmonPath(allocator: mem.Allocator) ![]const u8 {
+    const HwmonError = error{HwmonNotFound};
 
-    const paths = comptime blk: {
-        const base_paths = .{
-            "/device/mem_info_vram_total",
-            "/device/mem_info_vram_used",
-            "/temp1_input",
-            "/device/gpu_busy_percent",
-            "/device/mem_busy_percent",
-            "/pwm1",
-            "/pwm1_max",
-        };
-
-        var full_paths: [base_paths.len][]const u8 = undefined;
-        for (base_paths, 0..) |path, i| full_paths[i] = base_hwmon ++ path;
-
-        break :blk full_paths;
+    var card0_hwmon_dir = fs.openDirAbsolute("/sys/class/drm/card0/device/hwmon", .{ .iterate = true }) catch |err| {
+        debug.print("Fallback hwmon dir open failed: {}\n", .{err});
+        return HwmonError.HwmonNotFound;
     };
 
-    const memory_total = parseNumber(try readSysFile(paths[0]));
-    const memory_used = parseNumber(try readSysFile(paths[1]));
-    const temperature = parseFloat(try readSysFile(paths[2])) / 1000.0;
-    const gpu_busy_percent = parseNumber(try readSysFile(paths[3]));
-    const memory_busy_percent = parseNumber(try readSysFile(paths[4]));
+    defer card0_hwmon_dir.close();
 
-    const pwm_value = parseNumber(try readSysFile(paths[5]));
-    const max_pwm_value = parseNumber(try readSysFile(paths[6]));
-    const pwm_percentage = @as(u64, @intFromFloat((@as(f32, @floatFromInt(pwm_value)) / @as(f32, @floatFromInt(max_pwm_value))) * 100.0));
+    var it = card0_hwmon_dir.iterate();
+    while (try it.next()) |entry| {
+        if (entry.kind != .directory) continue;
+
+        const hwmon_path = try std.fmt.allocPrint(allocator, "/sys/class/drm/card0/device/hwmon/{s}/name", .{entry.name});
+        defer allocator.free(hwmon_path);
+
+        const name = readSysFile(hwmon_path) catch |err| {
+            debug.print("Could not read {s}: {}\n", .{ hwmon_path, err });
+            continue;
+        };
+
+        if (mem.eql(u8, name, "amdgpu")) return try std.fmt.allocPrint(allocator, "/sys/class/drm/card0/device/hwmon/{s}", .{entry.name});
+    }
+
+    return HwmonError.HwmonNotFound;
+}
+
+noinline fn getGPUInfo(allocator: mem.Allocator) !GPUInfo {
+    const base_hwmon = try detectHwmonPath(allocator);
+    defer allocator.free(base_hwmon);
+
+    const paths: []const []const u8 = &.{
+        "/device/mem_info_vram_total",
+        "/device/mem_info_vram_used",
+        "/temp1_input",
+        "/device/gpu_busy_percent",
+        "/device/mem_busy_percent",
+        "/pwm1",
+        "/pwm1_max",
+    };
+
+    var full_paths: [paths.len][]const u8 = undefined;
+
+    for (paths, 0..) |suffix, i| full_paths[i] = try std.fmt.allocPrint(allocator, "{s}{s}", .{ base_hwmon, suffix });
+
+    const memory_total = parseNumber(try readSysFile(full_paths[0]));
+    const memory_used = parseNumber(try readSysFile(full_paths[1]));
+    const temperature = parseFloat(try readSysFile(full_paths[2])) / 1000.0;
+    const gpu_busy_percent = parseNumber(try readSysFile(full_paths[3]));
+    const memory_busy_percent = parseNumber(try readSysFile(full_paths[4]));
+    const pwm_value = parseNumber(try readSysFile(full_paths[5]));
+    const pwm_max = parseNumber(try readSysFile(full_paths[6]));
+    const pwm_percentage = @as(u64, @intFromFloat((@as(f32, @floatFromInt(pwm_value)) / @as(f32, @floatFromInt(pwm_max))) * 100.0));
+
+    // Free all full_paths entries
+    for (full_paths) |p| allocator.free(p);
 
     return GPUInfo{
         .memory_total = memory_total,
@@ -88,20 +113,19 @@ noinline fn getGPUInfo() !GPUInfo {
 
 const FmtSize = struct {
     size: u64,
-
-    pub inline fn format(self: FmtSize, comptime frmt: []const u8, options: fmt.FormatOptions, writer: anytype) !void {
+    pub inline fn format(self: FmtSize, comptime f: []const u8, o: fmt.FormatOptions, w: anytype) !void {
         return if (self.size >= GIGA) {
-            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / GIGA, frmt, options, writer, 0);
-            try writer.writeByte('G');
+            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / GIGA, f, o, w, 0);
+            try w.writeByte('G');
         } else if (self.size >= MEGA) {
-            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / MEGA, frmt, options, writer, 0);
-            try writer.writeByte('M');
+            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / MEGA, f, o, w, 0);
+            try w.writeByte('M');
         } else if (self.size >= KILO) {
-            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / KILO, frmt, options, writer, 0);
-            try writer.writeByte('K');
+            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / KILO, f, o, w, 0);
+            try w.writeByte('K');
         } else {
-            try fmt.formatType(self.size, frmt, options, writer, 0);
-            try writer.writeByte('B');
+            try fmt.formatType(self.size, f, o, w, 0);
+            try w.writeByte('B');
         };
     }
 };
@@ -111,18 +135,26 @@ inline fn fmtSize(size: u64) FmtSize {
 }
 
 pub fn main() !void {
-    const gpu_info = try getGPUInfo();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
 
-    var bw = io.bufferedWriter(io.getStdOut().writer());
+    const gpu_info = try getGPUInfo(allocator);
 
-    try bw.writer().print("{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d:.0}%\\n\\nMemory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}", .{
-        gpu_info.gpu_busy_percent,
-        gpu_info.temperature,
-        gpu_info.pwm_percentage,
-        fmtSize(gpu_info.memory_total),
-        fmtSize(gpu_info.memory_used),
-        fmtSize(gpu_info.memory_free),
-    });
+    var out = std.ArrayList(u8).init(allocator);
+    defer out.deinit();
 
-    try bw.flush();
+    try out.writer().print(
+        "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d:.0}%\\n\\nMemory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}",
+        .{
+            gpu_info.gpu_busy_percent,
+            gpu_info.temperature,
+            gpu_info.pwm_percentage,
+            fmtSize(gpu_info.memory_total),
+            fmtSize(gpu_info.memory_used),
+            fmtSize(gpu_info.memory_free),
+        },
+    );
+
+    try io.getStdOut().writer().writeAll(out.items);
 }
