@@ -4,6 +4,7 @@ const mem = std.mem;
 const io = std.io;
 const fs = std.fs;
 const math = std.math;
+const time = std.time;
 
 const c = @cImport({
     @cInclude("stdlib.h");
@@ -151,10 +152,15 @@ noinline fn parse() !MemoryInfo {
 }
 
 pub fn main() !void {
-    const mem_info = try parse();
-    var bw = io.bufferedWriter(io.getStdOut().writer());
-    try bw.writer().print("{}", .{mem_info});
-    try bw.flush();
+    var stdout = io.getStdOut().writer();
 
-    _ = c.system("pkill -RTMIN+4 waybar");
+    while (true) {
+        const mem_info = try parse();
+
+        try stdout.print("{}\n", .{mem_info});
+
+        _ = c.system("pkill -RTMIN+4 waybar");
+
+        std.Thread.sleep(1 * time.ns_per_s);
+    }
 }

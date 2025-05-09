@@ -38,7 +38,7 @@ inline fn createIcmpPacket(buffer: []u8) void {
     @memset(buffer, 0);
     buffer[0] = 8;
     buffer[1] = 0;
-    
+
     const cs = calculateChecksum(buffer);
     buffer[2] = @as(u8, @truncate(cs >> 8));
     buffer[3] = @as(u8, @truncate(cs & 0xFF));
@@ -58,7 +58,7 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     const addr = try net.Address.parseIp4(ip_address, 0);
 
     const start_time = time.milliTimestamp();
-    
+
     _ = try posix.sendto(socket, buffer, 0, &addr.any, addr.getOsSockLen());
     _ = try posix.recvfrom(socket, buffer, 0, null, null);
 
@@ -67,24 +67,24 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
 }
 
 pub fn main() !void {
+    var stdout = io.getStdOut().writer();
     var buffer: [PACKET_SIZE]u8 = undefined;
 
-    var bw = io.bufferedWriter(io.getStdOut().writer());
-    const writer = bw.writer();
+    while (true) {
+        createIcmpPacket(&buffer);
 
-    createIcmpPacket(&buffer);
+        const latency = ping(&buffer, TARGET) catch |err| switch (err) {
+            error.Timeout, error.NetworkError => {
+                try stdout.print("{{\"text\":\"\", \"tooltip\":\"\", \"class\":\"hidden\"}}\n", .{});
+                continue;
+            },
+            else => |e| return e,
+        };
 
-    const latency = ping(&buffer, TARGET) catch |err| switch (err) {
-        error.Timeout, error.NetworkError => {
-            try writer.print("{{\"text\":\"\", \"tooltip\":\"\", \"class\":\"hidden\"}}", .{});
-            try bw.flush();
-            return;
-        },
-        else => |e| return e,
-    };
+        try stdout.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
 
-    try writer.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}", .{ latency, TARGET });
-    try bw.flush();
+        _ = c.system("pkill -RTMIN+2 waybar");
 
-    _ = c.system("pkill -RTMIN+2 waybar");
+        std.time.sleep(1 * time.ns_per_s);
+    }
 }

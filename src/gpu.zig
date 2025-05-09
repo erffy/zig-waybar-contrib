@@ -4,6 +4,7 @@ const mem = std.mem;
 const fmt = std.fmt;
 const io = std.io;
 const debug = std.debug;
+const time = std.time;
 
 const c = @cImport({
     @cInclude("stdlib.h");
@@ -143,24 +144,30 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const gpu_info = try getGPUInfo(allocator);
+    const stdout = io.getStdOut().writer();
 
-    var out = std.ArrayList(u8).init(allocator);
-    defer out.deinit();
+    while (true) {
+        const gpu_info = try getGPUInfo(allocator);
 
-    try out.writer().print(
-        "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d:.0}%\\n\\nMemory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}",
-        .{
-            gpu_info.gpu_busy_percent,
-            gpu_info.temperature,
-            gpu_info.pwm_percentage,
-            fmtSize(gpu_info.memory_total),
-            fmtSize(gpu_info.memory_used),
-            fmtSize(gpu_info.memory_free),
-        },
-    );
+        var out = std.ArrayList(u8).init(allocator);
+        defer out.clearRetainingCapacity(); // reuse buffer instead of freeing every time
 
-    try io.getStdOut().writer().writeAll(out.items);
+        try out.writer().print(
+            "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d:.0}%\\n\\nMemory Total · {d:.2}\\nMemory Used · {d:.2}\\nMemory Free · {d:.2}\"}}\n",
+            .{
+                gpu_info.gpu_busy_percent,
+                gpu_info.temperature,
+                gpu_info.pwm_percentage,
+                fmtSize(gpu_info.memory_total),
+                fmtSize(gpu_info.memory_used),
+                fmtSize(gpu_info.memory_free),
+            },
+        );
 
-    _ = c.system("pkill -RTMIN+5 waybar");
+        try stdout.writeAll(out.items);
+
+        _ = c.system("pkill -RTMIN+5 waybar");
+
+        std.time.sleep(1 * time.ns_per_s);
+    }
 }
