@@ -1,65 +1,51 @@
 > [!IMPORTANT]
-> I'm new to Zig, so it might take me some time to add or update modules. I'd really appreciate your help and support as I learn! 🥰
+> I'm new to Zig, so it might take me some time to add or update modules. Your help and support mean a lot as I learn and grow with this project! 🥰
 
 # zig-waybar-contrib
-A collection of high-performance Waybar modules written in Zig.
 
-## Overview
-`zig-waybar-contrib` provides efficient and lightweight modules for [Waybar](https://github.com/Alexays/Waybar) by leveraging the performance and safety features of [Zig](https://ziglang.org/). These modules are designed to optimize system monitoring and status reporting with minimal resource usage.
+**A collection of high-performance Waybar modules written in Zig.**
 
-## Features
-- ⚡ **High Performance**: Optimized Zig implementations for minimal resource consumption.
-- 🧩 **Modular Design**: Select only the modules you need for flexibility.
-- 📊 **Real-time Monitoring**: Accurate system metrics with minimal overhead.
-  
-## Available Modules
-- All modules write a single line json output.
-- All modules are compiled with LTO and ReleaseFast optimizations. See the [build](./build.zig) file for details.
+## 🚀 Overview
 
-| Module  | Description                               | Status                          | Dependencies                  | Known Issues                                    | Supports               |
-|---------|-------------------------------------------|---------------------------------|-------------------------------|-------------------------------------------------|------------------------|
-| Updates | Tracks available system updates           | ✅ Implemented                  | `pacman-contrib`, `fakeroot`  | Compatible only with Arch-based distributions   |                        |
-| GPU     | Monitors GPU statistics and performance   | ✅ Implemented                  |                               |                                                 | AMD GPUs (RX series)   |
-| Memory  | Tracks system memory usage and statistics | ✅ Implemented                  |                               |                                                 |                        |
-| Ping    | Network latency monitoring                | ✅ Implemented                  |                               |                                                 |                        |
+`zig-waybar-contrib` offers lightweight, efficient Waybar modules built with [Zig](https://ziglang.org/). By leveraging Zig’s speed and safety, these modules aim to deliver accurate system monitoring with minimal overhead.
 
-## Screenshots
+## ✨ Features
 
-| Module  | Screenshot                                                               |
-|---------|--------------------------------------------------------------------------|
-| Updates | ![](assets/updates_available.png) ![](assets/updates_noupdate.png)       |
-| GPU     | ![](assets/gpu.png)                                                      |
-| Memory  | ![](assets/memory.png)                                                   |
-| Ping    | ![](assets/ping.png)                                                     |
+- ⚡ **High Performance** – Optimized using Zig’s `ReleaseFast` + LTO.
+- 🧩 **Modular** – Use only the modules you need.
+- 📊 **Real-Time Monitoring** – Reliable and up-to-date metrics.
+- 💡 **Minimal Dependencies** – Only essential tools required for specific modules.
 
-## Installation
-1. Download the latest release from the [GitHub Releases](https://github.com/erffy/zig-waybar-contrib/releases).
-2. Alternatively, you can build from source (see the section below).
+## 📦 Available Modules
 
-## Configuration
+> All modules output a single-line JSON, fully compatible with Waybar’s `custom` module interface.
 
-Add modules to your Waybar configuration (`~/.config/waybar/config`):
+| Module  | Description                               | Status           | Dependencies                 | Supported Systems        |
+|---------|-------------------------------------------|------------------|------------------------------|--------------------------|
+| Updates | Tracks available system updates           | ✅ Implemented   | `pacman-contrib`, `fakeroot` | Arch Linux               |
+| GPU     | Monitors GPU statistics and performance   | ✅ Implemented   |                              | AMD RX Series GPUs       |
+| Memory  | Monitors system memory usage              | ✅ Implemented   |                              |                          |
+| Ping    | Network latency checker                   | ✅ Implemented   |                              |                          |
 
-```json
-{
-    "modules-right": [
-        "custom/updates",
-        "custom/gpu",
-        "custom/memory",
-        "custom/ping"
-    ],
-    "custom/updates": {
-        "exec": "path/to/updates-module",
-        "return-type": "json",
-        "interval": 3600
-    }
-    // Add other module configurations as needed
-}
-```
+## 📸 Screenshots
 
-## Building from Source
-> Requirements
-- Zig (0.14)
+| Module  | Preview                                                                        |
+|---------|--------------------------------------------------------------------------------|
+| Updates | ![](assets/updates_available.png) ![](assets/updates_noupdate.png)            |
+| GPU     | ![](assets/gpu.png)                                                            |
+| Memory  | ![](assets/memory.png)                                                         |
+| Ping    | ![](assets/ping.png)                                                           |
+
+## 🔧 Installation
+
+### Option 1: Download Release
+
+1. Head to the [GitHub Releases](https://github.com/erffy/zig-waybar-contrib/releases) page.
+2. Download the latest compiled binaries.
+
+### Option 2: Build from Source
+
+> **Requirements:** Zig 0.14+
 
 ```bash
 git clone https://github.com/erffy/zig-waybar-contrib
@@ -67,17 +53,41 @@ cd zig-waybar-contrib
 zig build
 ```
 
-## Contributing
+## ⚙️ Configuration
 
-Contributions are welcome! Please consider:
+Add module entries to your Waybar config (`~/.config/waybar/config`):
+
+```json
+{
+  "modules-right": [
+    "custom/updates",
+    "custom/gpu",
+    "custom/memory",
+    "custom/ping"
+  ],
+  "custom/updates": {
+    "exec": "path/to/updates-module",
+    "return-type": "json",
+    "interval": 3600
+  }
+  // Add similar blocks for other modules
+}
+```
+
+## 🤝 Contributing
+
+All contributions are welcome! You can help by:
+
 - Adding new modules
-- Improving existing modules
+- Improving current implementations
 - Fixing bugs
-- Improving documentation
+- Enhancing documentation
+
+Feel free to open a PR or an issue 😊
 
 ## 🛡️ License
 
-This project is licensed under the GNU General Public License v3.0. See the [LICENSE](./LICENSE) file for details.
+Licensed under the **GNU General Public License v3.0**. See the [LICENSE](./LICENSE) file for more info.
 
 ---
 
