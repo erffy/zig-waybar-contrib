@@ -5,6 +5,10 @@ const io = std.io;
 const fs = std.fs;
 const math = std.math;
 
+const c = @cImport({
+    @cInclude("stdlib.h");
+});
+
 const KILO: comptime_int = 1024;
 const MEGA: comptime_int = KILO * KILO;
 const GIGA: comptime_int = KILO * MEGA;
@@ -151,4 +155,6 @@ pub fn main() !void {
     var bw = io.bufferedWriter(io.getStdOut().writer());
     try bw.writer().print("{}", .{mem_info});
     try bw.flush();
+
+    _ = c.system("pkill -RTMIN+4 waybar");
 }

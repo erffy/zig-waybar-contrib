@@ -6,6 +6,10 @@ const io = std.io;
 const time = std.time;
 const heap = std.heap;
 
+const c = @cImport({
+    @cInclude("stdlib.h");
+});
+
 const PingError = error{
     Timeout,
     NetworkError,
@@ -81,4 +85,6 @@ pub fn main() !void {
 
     try writer.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}", .{ latency, TARGET });
     try bw.flush();
+
+    _ = c.system("pkill -RTMIN+2 waybar");
 }

@@ -8,6 +8,10 @@ const fs = std.fs;
 const ascii = std.ascii;
 const math = std.math;
 
+const c = @cImport({
+    @cInclude("stdlib.h");
+});
+
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
 const MAX_UPDATES = 75;
@@ -135,6 +139,8 @@ pub fn main() !void {
     var bw = io.bufferedWriter(io.getStdOut().writer());
     try bw.writer().print("{{\"text\":\"\",\"tooltip\":\"{d} updates available.\\n\\n{s}\"}}", .{ updates_count, mem.sliceTo(json_buffer, 0) });
     try bw.flush();
+
+    _ = c.system("pkill -RTMIN+3 waybar");
 }
 
 const CheckUpdatesError = error{

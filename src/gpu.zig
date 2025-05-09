@@ -5,6 +5,10 @@ const fmt = std.fmt;
 const io = std.io;
 const debug = std.debug;
 
+const c = @cImport({
+    @cInclude("stdlib.h");
+});
+
 const KILO: u64 = 1024;
 const MEGA: u64 = KILO * KILO;
 const GIGA: u64 = KILO * MEGA;
@@ -157,4 +161,6 @@ pub fn main() !void {
     );
 
     try io.getStdOut().writer().writeAll(out.items);
+
+    _ = c.system("pkill -RTMIN+5 waybar");
 }
