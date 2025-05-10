@@ -6,10 +6,6 @@ const io = std.io;
 const time = std.time;
 const heap = std.heap;
 
-const c = @cImport({
-    @cInclude("stdlib.h");
-});
-
 const PingError = error{
     Timeout,
     NetworkError,
@@ -17,7 +13,7 @@ const PingError = error{
 
 const TARGET = "8.8.8.8";
 const PACKET_SIZE = 64;
-const TIMEOUT_MS: i64 = 5000;
+const TIMEOUT_MS: i64 = 10000;
 
 inline fn calculateChecksum(data: []const u8) u16 {
     var sum: u32 = 0;
@@ -63,23 +59,16 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     _ = try posix.recvfrom(socket, buffer, 0, null, null);
 
     const latency = time.milliTimestamp() - start_time;
-    return if (latency >= 0 and latency <= TIMEOUT_MS) latency else PingError.Timeout;
+    return if (latency >= 0 and latency <= TIMEOUT_MS) latency else 0;
 }
 
 pub fn main() !void {
     var stdout = io.getStdOut().writer();
+    var buffer: [PACKET_SIZE]u8 = undefined;
 
-    while (true) {
-        var buffer: [PACKET_SIZE]u8 = undefined;
+    createIcmpPacket(&buffer);
 
-        createIcmpPacket(&buffer);
+    const latency = try ping(&buffer, TARGET);
 
-        const latency = try ping(&buffer, TARGET);
-
-        try stdout.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
-
-        _ = c.system("pkill -RTMIN+2 waybar");
-
-        std.time.sleep(1 * time.ns_per_s);
-    }
+    try stdout.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
 }
