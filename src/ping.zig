@@ -68,18 +68,13 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
 
 pub fn main() !void {
     var stdout = io.getStdOut().writer();
-    var buffer: [PACKET_SIZE]u8 = undefined;
 
     while (true) {
+        var buffer: [PACKET_SIZE]u8 = undefined;
+
         createIcmpPacket(&buffer);
 
-        const latency = ping(&buffer, TARGET) catch |err| switch (err) {
-            error.Timeout, error.NetworkError => {
-                try stdout.print("{{\"text\":\"\", \"tooltip\":\"\", \"class\":\"hidden\"}}\n", .{});
-                continue;
-            },
-            else => |e| return e,
-        };
+        const latency = try ping(&buffer, TARGET);
 
         try stdout.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
 
