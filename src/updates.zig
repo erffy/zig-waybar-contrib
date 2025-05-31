@@ -7,6 +7,15 @@ const sort = std.sort;
 const fs = std.fs;
 const ascii = std.ascii;
 const math = std.math;
+const posix = std.posix;
+const time = std.time;
+const fmt = std.fmt;
+const ArrayList = std.ArrayList;
+const Thread = std.Thread;
+
+const c = @cImport({
+    @cInclude("stdlib.h");
+});
 
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
@@ -87,54 +96,59 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const updates_output = try checkupdates(allocator);
-    if (updates_output.len == 0) {
-        try io.getStdOut().writer().writeAll("{\"text\":\"\",\"tooltip\":\"You're up to date!\"}");
-        return;
-    }
+    const stdout = io.getStdOut().writer();
 
-    var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
-    var updates_count: usize = 0;
+    while (true) {
+        const updates_output = try checkupdates(allocator);
+        if (updates_output.len == 0) {
+            try stdout.writeAll("{}\n");
+        } else {
+            var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
+            var updates_count: usize = 0;
 
-    var lines = mem.splitAny(u8, updates_output, "\n");
-    while (lines.next()) |line| {
-        if (updates_count >= MAX_UPDATES) break;
-        if (line.len == 0) continue;
+            var lines = mem.splitAny(u8, updates_output, "\n");
+            while (lines.next()) |line| {
+                if (updates_count >= MAX_UPDATES) break;
+                if (line.len == 0) continue;
 
-        if (parseLine(line, &updates[updates_count])) updates_count += 1;
-    }
+                if (parseLine(line, &updates[updates_count])) updates_count += 1;
+            }
 
-    sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
+            sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
 
-    var output_buffer = try allocator.alloc(u8, BUFFER_SIZE * MAX_UPDATES);
-    defer allocator.free(output_buffer);
+            var output_buffer = try allocator.alloc(u8, BUFFER_SIZE * MAX_UPDATES);
+            defer allocator.free(output_buffer);
 
-    var output_stream = io.fixedBufferStream(output_buffer);
-    const writer = output_stream.writer();
+            var output_stream = io.fixedBufferStream(output_buffer);
+            const writer = output_stream.writer();
 
-    for (updates[0..updates_count], 0..) |update, i| {
-        try writer.print("{s:<25} {s} -> {s}\n", .{
-            mem.sliceTo(&update.pkg_name, 0),
-            mem.sliceTo(&update.local_version, 0),
-            mem.sliceTo(&update.new_version, 0),
-        });
+            for (updates[0..updates_count], 0..) |update, i| {
+                try writer.print("{s:<25} {s} -> {s}\n", .{
+                    mem.sliceTo(&update.pkg_name, 0),
+                    mem.sliceTo(&update.local_version, 0),
+                    mem.sliceTo(&update.new_version, 0),
+                });
 
-        if (i == MAX_UPDATES - 1 and updates_count >= MAX_UPDATES) {
-            try writer.writeAll("...");
-            break;
+                if (i == MAX_UPDATES - 1 and updates_count >= MAX_UPDATES) {
+                    try writer.writeAll("...");
+                    break;
+                }
+            }
+
+            const written = output_stream.pos;
+            if (written > 0 and output_buffer[written - 1] == '\n') output_stream.pos -= 1;
+
+            const json_buffer = try allocator.alloc(u8, written * 2);
+            defer allocator.free(json_buffer);
+            escapeJson(output_buffer[0..output_stream.pos], json_buffer);
+
+            try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}\n", .{ updates_count, mem.sliceTo(json_buffer, 0) });
         }
+
+        _ = c.system("pkill -RTMIN+2 waybar");
+
+        Thread.sleep(160 * time.ns_per_s);
     }
-
-    const written = output_stream.pos;
-    if (written > 0 and output_buffer[written - 1] == '\n') output_stream.pos -= 1;
-
-    const json_buffer = try allocator.alloc(u8, written * 2);
-    defer allocator.free(json_buffer);
-    escapeJson(output_buffer[0..output_stream.pos], json_buffer);
-
-    var bw = io.bufferedWriter(io.getStdOut().writer());
-    try bw.writer().print("{{\"text\":\"\",\"tooltip\":\"{d} updates available.\\n\\n{s}\"}}", .{ updates_count, mem.sliceTo(json_buffer, 0) });
-    try bw.flush();
 }
 
 const CheckUpdatesError = error{
@@ -144,13 +158,13 @@ const CheckUpdatesError = error{
 };
 
 noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
-    const tmp_base = std.posix.getenv("TMPDIR") orelse "/var/tmp";
-    const uid = std.posix.getenv("EUID") orelse "1000";
+    const tmp_base = posix.getenv("TMPDIR") orelse "/var/tmp";
+    const uid = posix.getenv("EUID") orelse "1000";
 
-    var db_path_buffer: [std.fs.max_path_bytes]u8 = undefined;
-    var tmp_local_buffer: [std.fs.max_path_bytes]u8 = undefined;
+    var db_path_buffer: [fs.max_path_bytes]u8 = undefined;
+    var tmp_local_buffer: [fs.max_path_bytes]u8 = undefined;
 
-    const db_path = try std.fmt.bufPrint(&db_path_buffer, "{s}/checkup-db-{s}", .{ tmp_base, uid });
+    const db_path = try fmt.bufPrint(&db_path_buffer, "{s}/checkup-db-{s}", .{ tmp_base, uid });
 
     _ = fs.openDirAbsolute(db_path, .{}) catch |err| switch (err) {
         error.FileNotFound => try fs.makeDirAbsolute(db_path),
@@ -159,7 +173,7 @@ noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
     defer fs.deleteTreeAbsolute(db_path) catch {};
 
     const local_db = "/var/lib/pacman/local";
-    const tmp_local = try std.fmt.bufPrint(&tmp_local_buffer, "{s}/local", .{db_path});
+    const tmp_local = try fmt.bufPrint(&tmp_local_buffer, "{s}/local", .{db_path});
 
     fs.symLinkAbsolute(local_db, tmp_local, .{}) catch |err| switch (err) {
         error.PathAlreadyExists => {},
@@ -210,7 +224,7 @@ noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
     const term = try child.wait();
     if (term != .Exited or term.Exited != 0 or stderr.len > 0) allocator.free(stdout);
 
-    var lines = std.ArrayList(u8).init(allocator);
+    var lines = ArrayList(u8).init(allocator);
     var iter = mem.splitAny(u8, stdout, "\n");
     while (iter.next()) |line| {
         if (line.len == 0) continue;
