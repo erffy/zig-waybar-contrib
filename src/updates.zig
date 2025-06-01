@@ -99,50 +99,58 @@ pub fn main() !void {
         defer arena.deinit();
         const allocator = arena.allocator();
 
-        const updates_output = try checkupdates(allocator);
-        if (updates_output.len == 0) {
-            try stdout.writeAll("{{}}\n");
-        } else {
-            var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
-            var updates_count: usize = 0;
+        var err_buf: [512]u8 = undefined;
 
-            var lines = mem.splitAny(u8, updates_output, "\n");
-            while (lines.next()) |line| {
-                if (updates_count >= MAX_UPDATES) break;
-                if (line.len == 0) continue;
+        const result = checkupdates(allocator);
+        if (result) |updates_output| {
+            if (updates_output.len == 0) {
+                try stdout.writeAll("{{}}\n");
+            } else {
+                var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
+                var updates_count: usize = 0;
 
-                if (parseLine(line, &updates[updates_count])) updates_count += 1;
-            }
+                var lines = mem.splitAny(u8, updates_output, "\n");
+                while (lines.next()) |line| {
+                    if (updates_count >= MAX_UPDATES) break;
+                    if (line.len == 0) continue;
 
-            sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
-
-            var output_buffer = try allocator.alloc(u8, BUFFER_SIZE * MAX_UPDATES);
-            defer allocator.free(output_buffer);
-
-            var output_stream = io.fixedBufferStream(output_buffer);
-            const writer = output_stream.writer();
-
-            for (updates[0..updates_count], 0..) |update, i| {
-                try writer.print("{s:<25} {s} -> {s}\n", .{
-                    mem.sliceTo(&update.pkg_name, 0),
-                    mem.sliceTo(&update.local_version, 0),
-                    mem.sliceTo(&update.new_version, 0),
-                });
-
-                if (i == MAX_UPDATES - 1 and updates_count >= MAX_UPDATES) {
-                    try writer.writeAll("...");
-                    break;
+                    if (parseLine(line, &updates[updates_count])) updates_count += 1;
                 }
+
+                sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
+
+                var output_buffer = try allocator.alloc(u8, BUFFER_SIZE * MAX_UPDATES);
+                defer allocator.free(output_buffer);
+
+                var output_stream = io.fixedBufferStream(output_buffer);
+                const writer = output_stream.writer();
+
+                for (updates[0..updates_count], 0..) |update, i| {
+                    try writer.print("{s:<25} {s} -> {s}\n", .{
+                        mem.sliceTo(&update.pkg_name, 0),
+                        mem.sliceTo(&update.local_version, 0),
+                        mem.sliceTo(&update.new_version, 0),
+                    });
+
+                    if (i == MAX_UPDATES - 1 and updates_count >= MAX_UPDATES) {
+                        try writer.writeAll("...");
+                        break;
+                    }
+                }
+
+                const written = output_stream.pos;
+                if (written > 0 and output_buffer[written - 1] == '\n') output_stream.pos -= 1;
+
+                const json_buffer = try allocator.alloc(u8, written * 2);
+                defer allocator.free(json_buffer);
+                escapeJson(output_buffer[0..output_stream.pos], json_buffer);
+
+                try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}\n", .{ updates_count, mem.sliceTo(json_buffer, 0) });
             }
-
-            const written = output_stream.pos;
-            if (written > 0 and output_buffer[written - 1] == '\n') output_stream.pos -= 1;
-
-            const json_buffer = try allocator.alloc(u8, written * 2);
-            defer allocator.free(json_buffer);
-            escapeJson(output_buffer[0..output_stream.pos], json_buffer);
-
-            try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}\n", .{ updates_count, mem.sliceTo(json_buffer, 0) });
+        } else |err| {
+            const msg = std.fmt.bufPrint(&err_buf, "Error: {s}", .{@errorName(err)}) catch "Unknown";
+            escapeJson(msg, &err_buf);
+            try stdout.print("{{\"text\":\"  err\",\"tooltip\":\"{s}\"}}\n", .{mem.sliceTo(&err_buf, 0)});
         }
 
         _ = c.system("pkill -RTMIN+2 waybar");

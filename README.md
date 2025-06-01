@@ -22,10 +22,10 @@
 
 | Module  | Description                               | Status           | Dependencies                 | Supported Systems        |
 |---------|-------------------------------------------|------------------|------------------------------|--------------------------|
-| Updates | Tracks available system updates           | ✅ Implemented   | `pacman-contrib`, `fakeroot` | Arch Linux               |
-| GPU     | Monitors GPU statistics and performance   | ✅ Implemented   |                              | AMD RX Series GPUs       |
-| Memory  | Monitors system memory usage              | ✅ Implemented   |                              |                          |
-| Ping    | Network latency checker                   | ✅ Implemented   |                              |                          |
+| Updates | Tracks available system updates           | Implemented      | `fakeroot`                   | Arch Linux               |
+| GPU     | Monitors GPU statistics and performance   | Implemented      |                              | AMD, Intel and NVIDIA    |
+| Memory  | Monitors system memory usage              | Implemented      |                              |                          |
+| Ping    | Network latency checker                   | Implemented      |                              |                          |
 
 ## 📸 Screenshots
 
@@ -60,15 +60,17 @@ Add module entries to your Waybar config (`~/.config/waybar/config`):
 ```json
 {
   "modules-right": [
-    "custom/updates",
-    "custom/gpu",
-    "custom/memory",
-    "custom/ping"
+    "custom/updates", // targets 2
+    "custom/gpu", // targets 5
+    "custom/memory", // targets 4
+    "custom/ping" // no signal implementation
   ],
   "custom/updates": {
     "exec": "path/to/updates-module",
     "return-type": "json",
-    "interval": 3600
+    "interval": 0,
+    "escape": true,
+    "signal": 2
   }
   // Add similar blocks for other modules
 }
