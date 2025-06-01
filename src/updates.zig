@@ -92,16 +92,16 @@ inline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
 }
 
 pub fn main() !void {
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
-
     const stdout = io.getStdOut().writer();
 
     while (true) {
+        var arena = heap.ArenaAllocator.init(heap.page_allocator);
+        defer arena.deinit();
+        const allocator = arena.allocator();
+
         const updates_output = try checkupdates(allocator);
         if (updates_output.len == 0) {
-            try stdout.writeAll("{}\n");
+            try stdout.writeAll("{{}}\n");
         } else {
             var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
             var updates_count: usize = 0;
