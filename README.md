@@ -11,7 +11,7 @@
 
 ## ✨ Features
 
-- ⚡ **High Performance** – Optimized using Zig’s `ReleaseFast` + LTO.
+- ⚡ **High Performance** – Optimized using Zig’s `ReleaseFast` + LTO + LLVM.
 - 🧩 **Modular** – Use only the modules you need.
 - 📊 **Real-Time Monitoring** – Reliable and up-to-date metrics.
 - 💡 **Minimal Dependencies** – Only essential tools required for specific modules.
@@ -23,7 +23,7 @@
 | Module  | Description                               | Status           | Dependencies                 | Supported Systems        |
 |---------|-------------------------------------------|------------------|------------------------------|--------------------------|
 | Updates | Tracks available system updates           | Implemented      | `fakeroot`                   | Arch Linux               |
-| GPU     | Monitors GPU statistics and performance   | Implemented      |                              | AMD, Intel and NVIDIA    |
+| GPU     | Monitors GPU statistics and performance   | Implemented      |                              | AMD RX Series            |
 | Memory  | Monitors system memory usage              | Implemented      |                              |                          |
 | Ping    | Network latency checker                   | Implemented      |                              |                          |
 
@@ -31,7 +31,7 @@
 
 | Module  | Preview                                                                        |
 |---------|--------------------------------------------------------------------------------|
-| Updates | ![](assets/updates_available.png) ![](assets/updates_noupdate.png)            |
+| Updates | ![](assets/updates_available.png) ![](assets/updates_noupdate.png)             |
 | GPU     | ![](assets/gpu.png)                                                            |
 | Memory  | ![](assets/memory.png)                                                         |
 | Ping    | ![](assets/ping.png)                                                           |
