@@ -34,13 +34,13 @@
 
 All modules output single-line JSON compatible with Waybar's `custom` module interface.
 
-| Module      | Description                    | Status   | Dependencies | Platforms     | Signal  |
-|-------------|--------------------------------|----------|--------------|---------------|---------|
-| **Updates** | System package update tracker  | ✅ Ready | `fakeroot`   | Arch Linux    | 2       |
-| **GPU**     | GPU usage, temperature, memory | ✅ Ready | None         | AMD RX Series | 5       |
-| **Memory**  | RAM usage and statistics       | ✅ Ready | None         | Linux         | 4       |
-| **Ping**    | Network latency monitoring     | ✅ Ready | None         | Linux         | None    |
-| **Network** | Network speed monitoring       |          |              | Linux         |         |
+| Module      | Description                    | Status       | Dependencies | Platforms     | Signal  |
+|-------------|--------------------------------|--------------|--------------|---------------|---------|
+| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`   | Arch Linux    | 2       |
+| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | None         | AMD RX Series | 5       |
+| **Memory**  | RAM usage and statistics       | ✅ Ready     | None         | Linux         | 4       |
+| **Ping**    | Network latency monitoring     | ✅ Ready     | None         | Linux         | None    |
+| **Network** | Network speed monitoring       | ⚠️ Partially |              | Linux         | 3       |
 
 <!--
 ### Planned Modules
@@ -122,7 +122,8 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "custom/updates",
     "custom/gpu", 
     "custom/memory",
-    "custom/ping"
+    "custom/ping",
+    "custom/network"
   ],
   
   "custom/updates": {
@@ -151,6 +152,14 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "exec": "/usr/local/bin/ping-module",
     "return-type": "json",
     "interval": 1
+  },
+
+  // ⚠️ Partially implemented, unexpected behavior may occur.
+  "custom/network": {
+    "exec": "/usr/local/bin/network-module",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 3
   }
 }
 ```

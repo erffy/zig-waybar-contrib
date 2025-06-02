@@ -6,6 +6,8 @@ const fs = std.fs;
 const math = std.math;
 const time = std.time;
 
+const Thread = std.Thread;
+
 const c = @cImport({
     @cInclude("stdlib.h");
 });
@@ -161,6 +163,6 @@ pub fn main() !void {
 
         _ = c.system("pkill -RTMIN+4 waybar");
 
-        std.Thread.sleep(1 * time.ns_per_s);
+        Thread.sleep(1 * time.ns_per_s);
     }
 }

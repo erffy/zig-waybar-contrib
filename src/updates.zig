@@ -126,7 +126,7 @@ pub fn main() !void {
                 const writer = output_stream.writer();
 
                 for (updates[0..updates_count], 0..) |update, i| {
-                    try writer.print("{s:<25} {s} -> {s}\n", .{
+                    try writer.print("{s:<25} {s:<25} -> {s}\n", .{
                         mem.sliceTo(&update.pkg_name, 0),
                         mem.sliceTo(&update.local_version, 0),
                         mem.sliceTo(&update.new_version, 0),
