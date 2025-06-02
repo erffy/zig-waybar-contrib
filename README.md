@@ -183,7 +183,7 @@ zig-waybar-contrib/
 │   ├── updates.zig    # Updates module
 │   ├── gpu.zig        # GPU module  
 │   ├── memory.zig     # Memory module
-│   ├── 
+│   ├── network.zig    # Network module
 │   └── ping.zig       # Ping module
 ├── build.zig          # Build configuration
 └── assets/            # Screenshots
