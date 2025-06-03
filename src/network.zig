@@ -329,7 +329,7 @@ pub fn main() !void {
             var upload_buffer: [64]u8 = undefined;
             const upload = formatUploadSpeed(tx_speed, &upload_buffer);
 
-            try stdout.print("{{\"text\":\"{s}\",\"tooltip\":\"Gateway · {s}\\nLocal IP · {s}\\nInterface · {s}\\n  {s} ・   {s}\"}}\n", .{ download_and_upload, "0.0.0.0", "0.0.0.0", "lo", download, upload });
+            try stdout.print("{{\"text\":\"{s}\",\"tooltip\":\"Gateway · {s}\\nLocal IP · {s}\\nInterface · {s}\\n  {s} ・   {s}\"}}\n", .{ download_and_upload, "0.0.0.0", "0.0.0.0", stats.iface, download, upload });
 
             _ = c.system("pkill -RTMIN+3 waybar");
         }

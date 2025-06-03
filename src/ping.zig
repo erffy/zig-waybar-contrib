@@ -70,5 +70,5 @@ pub fn main() !void {
 
     const latency = try ping(&buffer, TARGET);
 
-    try stdout.print("{{\"text\":\"   {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
+    try stdout.print("{{\"text\":\"  {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
 }
