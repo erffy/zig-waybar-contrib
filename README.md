@@ -69,18 +69,26 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 
 ## Installation
 
-### Quick Install (Recommended)
-- Note: This project will be packaged for Pacman and submitted to the AUR in a future releases.
+### Quick Installation
 
-Download pre-compiled binaries from [GitHub Releases](https://github.com/erffy/zig-waybar-contrib/releases):
+#### From AUR (Recommended)
 
-<!--
+You can easily install the latest version of **zig-waybar-contrib** from the Arch User Repository (AUR). This package provides pre-built binaries as `waybar-module-X-bin`.
+
+Use your preferred AUR helper:
+
 ```bash
-# Download and extract latest release
-curl -L https://github.com/erffy/zig-waybar-contrib/releases/latest/download/zig-waybar-contrib.tar.gz | tar xz
-sudo cp zig-waybar-contrib/* /usr/local/bin/
+# Using paru
+paru -S zig-waybar-contrib
+
+# Using yay
+yay -S zig-waybar-contrib
 ```
--->
+
+#### From GitHub Releases
+
+If you prefer not to use AUR or want a specific release, download pre-compiled binaries from the [GitHub Releases page](https://github.com/erffy/zig-waybar-contrib/releases).
+Simply extract the downloaded archive and move the binaries to your system’s PATH or use them directly.
 
 ### Build from Source
 
