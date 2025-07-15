@@ -87,7 +87,7 @@ yay -S zig-waybar-contrib
 
 #### From GitHub Releases
 
-If you prefer not to use AUR or want a specific release, download pre-compiled binaries from the [GitHub Releases page](https://github.com/erffy/zig-waybar-contrib/releases).
+Download pre-compiled binaries from the [GitHub Releases page](https://github.com/erffy/zig-waybar-contrib/releases).
 Simply extract the downloaded archive and move the binaries to your system’s PATH or use them directly.
 
 ### Build from Source
@@ -135,7 +135,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
   ],
   
   "custom/updates": {
-    "exec": "/usr/local/bin/updates-module",
+    "exec": "/usr/bin/waybar-module-updates-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 10,
@@ -143,28 +143,28 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
   },
   
   "custom/gpu": {
-    "exec": "/usr/local/bin/gpu-module",
+    "exec": "/usr/bin/waybar-module-gpu-bin",
     "return-type": "json", 
     "interval": 0,
     "signal": 11,
   },
   
   "custom/memory": {
-    "exec": "/usr/local/bin/memory-module",
+    "exec": "/usr/bin/waybar-module-memory-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 12, 
   },
   
   "custom/ping": {
-    "exec": "/usr/local/bin/ping-module",
+    "exec": "/usr/bin/waybar-module-ping-bin",
     "return-type": "json",
     "interval": 1
   },
 
   // ⚠️ Partially implemented, unexpected behavior may occur.
   "custom/network": {
-    "exec": "/usr/local/bin/network-module",
+    "exec": "/usr/bin/waybar-module-network-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 13
