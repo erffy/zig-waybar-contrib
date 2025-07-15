@@ -6,11 +6,14 @@ const fmt = std.fmt;
 const io = std.io;
 const time = std.time;
 const posix = std.posix;
+const heap = std.heap;
 const Allocator = mem.Allocator;
 
 const KILO = 1024;
 const MEGA = 1024 * KILO;
 const GIGA = 1024 * MEGA;
+
+const GPUType = enum { AMD_Radeon };
 
 const GPUInfo = struct {
     temperature: f64,
@@ -50,10 +53,10 @@ fn readFile(allocator: Allocator, path: []const u8) ![]u8 {
 
     const content = try file.readToEndAlloc(allocator, 4096);
     errdefer allocator.free(content);
-    
+
     const trimmed = mem.trim(u8, content, " \n\t\r");
     if (trimmed.len == content.len) return content;
-    
+
     const result = try allocator.dupe(u8, trimmed);
     allocator.free(content);
     return result;
@@ -71,7 +74,7 @@ fn readF64(allocator: Allocator, path: []const u8) f64 {
     return fmt.parseFloat(f64, content) catch 0.0;
 }
 
-fn getHwmonPath(allocator: Allocator) ![]const u8 {
+fn getHwmonPath(allocator: Allocator) !struct { path: []const u8, gpu_type: GPUType } {
     var drm_dir = try fs.openDirAbsolute("/sys/class/drm", .{ .iterate = true });
     defer drm_dir.close();
 
@@ -94,8 +97,12 @@ fn getHwmonPath(allocator: Allocator) ![]const u8 {
 
             const name = readFile(allocator, name_path) catch continue;
 
+            const full_path = try fmt.allocPrint(allocator, "{s}/{s}", .{ hwmon_glob_path, hw_entry.name });
+
             if (mem.eql(u8, name, "amdgpu")) {
-                return try fmt.allocPrint(allocator, "{s}/{s}", .{ hwmon_glob_path, hw_entry.name });
+                return .{ .path = full_path, .gpu_type = .AMD_Radeon };
+            } else if (mem.eql(u8, name, "xe")) {
+                return .{ .path = full_path, .gpu_type = .Intel_Xe };
             }
         }
     }
@@ -103,37 +110,51 @@ fn getHwmonPath(allocator: Allocator) ![]const u8 {
     return error.HwmonNotFound;
 }
 
-fn getGPUInfo(allocator: Allocator, base: []const u8) !GPUInfo {
-    const temp_path = try fmt.allocPrint(allocator, "{s}/temp1_input", .{base});
-    defer allocator.free(temp_path);
-    const temp = readF64(allocator, temp_path) / 1000.0;
+fn getGPUInfo(allocator: Allocator, base: []const u8, gpu_type: GPUType) !GPUInfo {
+    var temp: f64 = 0;
+    var gpu: u64 = 0;
+    var pwm: u64 = 0;
+    var mem_total: u64 = 0;
+    var mem_used: u64 = 0;
 
-    const gpu_path = try fmt.allocPrint(allocator, "{s}/device/gpu_busy_percent", .{base});
-    defer allocator.free(gpu_path);
-    const gpu = readU64(allocator, gpu_path);
+    var pwm_max: u64 = 0;
 
-    const pwm_path = try fmt.allocPrint(allocator, "{s}/pwm1", .{base});
-    defer allocator.free(pwm_path);
-    const pwm = readU64(allocator, pwm_path);
+    switch (gpu_type) {
+        .AMD_Radeon => {
+            const temp_path = try fmt.allocPrint(allocator, "{s}/temp1_input", .{base});
+            defer allocator.free(temp_path);
+            temp = readF64(allocator, temp_path) / 1000.0;
 
-    const pwm_max_path = try fmt.allocPrint(allocator, "{s}/pwm1_max", .{base});
-    defer allocator.free(pwm_max_path);
-    const pwm_max = readU64(allocator, pwm_max_path);
+            const gpu_path = try fmt.allocPrint(allocator, "{s}/device/gpu_busy_percent", .{base});
+            defer allocator.free(gpu_path);
+            gpu = readU64(allocator, gpu_path);
 
-    const mem_total_path = try fmt.allocPrint(allocator, "{s}/device/mem_info_vram_total", .{base});
-    defer allocator.free(mem_total_path);
-    const mem_total = readU64(allocator, mem_total_path);
+            const pwm_path = try fmt.allocPrint(allocator, "{s}/pwm1", .{base});
+            defer allocator.free(pwm_path);
+            pwm = readU64(allocator, pwm_path);
 
-    const mem_used_path = try fmt.allocPrint(allocator, "{s}/device/mem_info_vram_used", .{base});
-    defer allocator.free(mem_used_path);
-    const mem_used = readU64(allocator, mem_used_path);
+            const pwm_max_path = try fmt.allocPrint(allocator, "{s}/pwm1_max", .{base});
+            defer allocator.free(pwm_max_path);
+            pwm_max = readU64(allocator, pwm_max_path);
+
+            const mem_total_path = try fmt.allocPrint(allocator, "{s}/device/mem_info_vram_total", .{base});
+            defer allocator.free(mem_total_path);
+            mem_total = readU64(allocator, mem_total_path);
+
+            const mem_used_path = try fmt.allocPrint(allocator, "{s}/device/mem_info_vram_used", .{base});
+            defer allocator.free(mem_used_path);
+            mem_used = readU64(allocator, mem_used_path);
+        }
+    }
+
+    if (pwm_max > 0) pwm = pwm * 100 / pwm_max;
 
     const mem_free = if (mem_total > mem_used) mem_total - mem_used else 0;
 
     return GPUInfo{
         .temperature = temp,
         .gpu_busy = gpu,
-        .pwm = if (pwm_max > 0) pwm * 100 / pwm_max else 0,
+        .pwm = pwm,
         .mem_total = mem_total,
         .mem_used = mem_used,
         .mem_free = mem_free,
@@ -141,25 +162,25 @@ fn getGPUInfo(allocator: Allocator, base: []const u8) !GPUInfo {
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-    
+
     const stdout = io.getStdOut().writer();
 
-    const base = try getHwmonPath(allocator);
-    defer allocator.free(base);
+    const base_info = try getHwmonPath(allocator);
+    defer allocator.free(base_info.path);
 
     while (true) {
         const waybarPid = try waybar.getPid();
-        
-        const info = try getGPUInfo(allocator, base);
-        
+        const info = try getGPUInfo(allocator, base_info.path, base_info.gpu_type);
+
         try stdout.print(
-            "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\n\\nVRAM Total · {d:.2}\\nVRAM Used · {d:.2}\\nVRAM Free · {d:.2}\"}}\n",
+            "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"Vendor: {s}\\n\\nPWM · {d}%\\nVRAM Total · {d:.2}\\nVRAM Used · {d:.2}\\nVRAM Free · {d:.2}\"}}\n",
             .{
                 info.gpu_busy,
                 @as(i64, @intFromFloat(info.temperature)),
+                @tagName(base_info.gpu_type),
                 info.pwm,
                 fmtSize(info.mem_total),
                 fmtSize(info.mem_used),
