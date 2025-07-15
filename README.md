@@ -39,8 +39,8 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 | **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`   | Arch Linux    | 10       |
 | **GPU**     | GPU usage, temperature, memory | ✅ Ready     | None         | AMD RX Series | 11       |
 | **Memory**  | RAM usage and statistics       | ✅ Ready     | None         | Linux         | 12       |
-| **Ping**    | Network latency monitoring     | ✅ Ready     | None         | Linux         | None     |
-| **Network** | Network speed monitoring       | ⚠️ Partially |              | Linux         | 13       |
+| **Ping**    | Network latency monitoring     | ✅ Ready     | None         | Linux         | 13       |
+| **Network** | Network speed monitoring       | ⚠️ Partially |              | Linux         | 14       |
 
 <!--
 ### Planned Modules
@@ -72,7 +72,8 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 
 #### [From AUR (Recommended)](https://aur.archlinux.org/packages/zig-waybar-contrib)
 
-You can easily install the latest version of **zig-waybar-contrib** from the Arch User Repository (AUR). This package provides pre-built binaries as `waybar-module-X-bin`.
+You can easily install the latest version of **zig-waybar-contrib** from the Arch User Repository (AUR). 
+This package provides pre-built binaries as `waybar-module-X-bin`.
 
 Use your preferred AUR helper:
 
@@ -158,7 +159,8 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
   "custom/ping": {
     "exec": "/usr/bin/waybar-module-ping-bin",
     "return-type": "json",
-    "interval": 1
+    "interval": 0,
+    "signal": 13
   },
 
   // ⚠️ Partially implemented, unexpected behavior may occur.
@@ -166,7 +168,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "exec": "/usr/bin/waybar-module-network-bin",
     "return-type": "json",
     "interval": 0,
-    "signal": 13
+    "signal": 14
   }
 }
 ```

@@ -7,7 +7,6 @@ const fs = std.fs;
 const math = std.math;
 const time = std.time;
 const posix = std.posix;
-
 const Thread = std.Thread;
 
 const KILO: comptime_int = 1024;

@@ -1,10 +1,12 @@
 const std = @import("std");
+const waybar = @import("waybar.zig");
 const net = std.net;
 const mem = std.mem;
 const posix = std.posix;
 const io = std.io;
 const time = std.time;
 const heap = std.heap;
+const Thread = std.Thread;
 
 const PingError = error{
     Timeout,
@@ -56,19 +58,37 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     const start_time = time.milliTimestamp();
 
     _ = try posix.sendto(socket, buffer, 0, &addr.any, addr.getOsSockLen());
-    _ = try posix.recvfrom(socket, buffer, 0, null, null);
+
+    const recv_result = posix.recvfrom(socket, buffer, 0, null, null) catch |err| {
+        if (err == error.WouldBlock) return PingError.Timeout;
+        return PingError.NetworkError;
+    };
+    _ = recv_result;
 
     const latency = time.milliTimestamp() - start_time;
-    return if (latency >= 0 and latency <= TIMEOUT_MS) latency else 0;
+    return latency;
 }
+
 
 pub fn main() !void {
     var stdout = io.getStdOut().writer();
-    var buffer: [PACKET_SIZE]u8 = undefined;
 
-    createIcmpPacket(&buffer);
+    while (true) {
+        const waybarPid = try waybar.getPid();
+        var buffer: [PACKET_SIZE]u8 = undefined;
 
-    const latency = try ping(&buffer, TARGET);
+        createIcmpPacket(&buffer);
 
-    try stdout.print("{{\"text\":\"  {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
+        const latency = ping(&buffer, TARGET) catch |err| switch (err) {
+            PingError.Timeout => -1,
+            PingError.NetworkError => -2,
+            else => -3,
+        };
+
+        try stdout.print("{{\"text\":\"  {d}ms\", \"tooltip\":\"Target: {s}\"}}\n", .{ latency, TARGET });
+
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 14);
+
+        Thread.sleep(1 * time.ns_per_s);
+    }
 }

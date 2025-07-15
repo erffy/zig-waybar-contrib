@@ -331,7 +331,7 @@ pub fn main() !void {
 
             try stdout.print("{{\"text\":\"{s}\",\"tooltip\":\"Gateway · {s}\\nLocal IP · {s}\\nInterface · {s}\\n  {s} ・   {s}\"}}\n", .{ download_and_upload, "0.0.0.0", "0.0.0.0", stats.iface, download, upload });
 
-            if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 13);
+            if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 14);
         }
 
         last_rx = rx;
