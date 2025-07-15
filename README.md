@@ -130,7 +130,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "exec": "/usr/local/bin/updates-module",
     "return-type": "json",
     "interval": 0,
-    "signal": 2,
+    "signal": 10,
     "escape": true
   },
   
@@ -138,14 +138,14 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "exec": "/usr/local/bin/gpu-module",
     "return-type": "json", 
     "interval": 0,
-    "signal": 5,
+    "signal": 11,
   },
   
   "custom/memory": {
     "exec": "/usr/local/bin/memory-module",
     "return-type": "json",
     "interval": 0,
-    "signal": 4, 
+    "signal": 12, 
   },
   
   "custom/ping": {
@@ -159,7 +159,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "exec": "/usr/local/bin/network-module",
     "return-type": "json",
     "interval": 0,
-    "signal": 3
+    "signal": 13
   }
 }
 ```
