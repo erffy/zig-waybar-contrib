@@ -161,7 +161,7 @@ pub fn main() !void {
 
         try stdout.print("{}\n", .{mem_info});
 
-        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 4);
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 12);
 
         Thread.sleep(1 * time.ns_per_s);
     }

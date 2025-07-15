@@ -167,7 +167,7 @@ pub fn main() !void {
             },
         );
 
-        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 5);
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 11);
 
         time.sleep(1 * time.ns_per_s);
     }

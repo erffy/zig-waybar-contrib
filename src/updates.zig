@@ -103,7 +103,7 @@ pub fn main() !void {
         const result = checkupdates(allocator);
         if (result) |updates_output| {
             if (updates_output.len == 0) {
-                try stdout.writeAll("{{}}\n");
+                try stdout.print("{{}}\n", .{});
             } else {
                 var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
                 var updates_count: usize = 0;
@@ -152,7 +152,7 @@ pub fn main() !void {
             try stdout.print("{{\"text\":\"  err\",\"tooltip\":\"{s}\"}}\n", .{mem.sliceTo(&err_buf, 0)});
         }
 
-        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 2);
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 10);
 
         Thread.sleep(160 * time.ns_per_s);
     }

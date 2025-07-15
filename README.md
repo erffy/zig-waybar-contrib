@@ -34,13 +34,13 @@
 
 All modules output single-line JSON compatible with Waybar's `custom` module interface.
 
-| Module      | Description                    | Status       | Dependencies | Platforms     | Signal  |
-|-------------|--------------------------------|--------------|--------------|---------------|---------|
-| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`   | Arch Linux    | 2       |
-| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | None         | AMD RX Series | 5       |
-| **Memory**  | RAM usage and statistics       | ✅ Ready     | None         | Linux         | 4       |
-| **Ping**    | Network latency monitoring     | ✅ Ready     | None         | Linux         | None    |
-| **Network** | Network speed monitoring       | ⚠️ Partially |              | Linux         | 3       |
+| Module      | Description                    | Status       | Dependencies | Platforms     | Signal   |
+|-------------|--------------------------------|--------------|--------------|---------------|----------|
+| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`   | Arch Linux    | 10       |
+| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | None         | AMD RX Series | 11       |
+| **Memory**  | RAM usage and statistics       | ✅ Ready     | None         | Linux         | 12       |
+| **Ping**    | Network latency monitoring     | ✅ Ready     | None         | Linux         | None     |
+| **Network** | Network speed monitoring       | ⚠️ Partially |              | Linux         | 13       |
 
 <!--
 ### Planned Modules
