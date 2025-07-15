@@ -101,8 +101,6 @@ fn getHwmonPath(allocator: Allocator) !struct { path: []const u8, gpu_type: GPUT
 
             if (mem.eql(u8, name, "amdgpu")) {
                 return .{ .path = full_path, .gpu_type = .AMD_Radeon };
-            } else if (mem.eql(u8, name, "xe")) {
-                return .{ .path = full_path, .gpu_type = .Intel_Xe };
             }
         }
     }
