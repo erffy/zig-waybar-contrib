@@ -69,18 +69,26 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 
 ## Installation
 
-### Quick Install (Recommended)
-- Note: This project will be packaged for Pacman and submitted to the AUR in a future releases.
+### Quick Installation
 
-Download pre-compiled binaries from [GitHub Releases](https://github.com/erffy/zig-waybar-contrib/releases):
+#### [From AUR (Recommended)](https://aur.archlinux.org/packages/zig-waybar-contrib)
 
-<!--
+You can easily install the latest version of **zig-waybar-contrib** from the Arch User Repository (AUR). This package provides pre-built binaries as `waybar-module-X-bin`.
+
+Use your preferred AUR helper:
+
 ```bash
-# Download and extract latest release
-curl -L https://github.com/erffy/zig-waybar-contrib/releases/latest/download/zig-waybar-contrib.tar.gz | tar xz
-sudo cp zig-waybar-contrib/* /usr/local/bin/
+# Using paru
+paru -S zig-waybar-contrib
+
+# Using yay
+yay -S zig-waybar-contrib
 ```
--->
+
+#### From GitHub Releases
+
+Download pre-compiled binaries from the [GitHub Releases page](https://github.com/erffy/zig-waybar-contrib/releases).
+Simply extract the downloaded archive and move the binaries to your system’s PATH or use them directly.
 
 ### Build from Source
 
@@ -127,39 +135,39 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
   ],
   
   "custom/updates": {
-    "exec": "/usr/local/bin/updates-module",
+    "exec": "/usr/bin/waybar-module-updates-bin",
     "return-type": "json",
     "interval": 0,
-    "signal": 2,
+    "signal": 10,
     "escape": true
   },
   
   "custom/gpu": {
-    "exec": "/usr/local/bin/gpu-module",
+    "exec": "/usr/bin/waybar-module-gpu-bin",
     "return-type": "json", 
     "interval": 0,
-    "signal": 5,
+    "signal": 11,
   },
   
   "custom/memory": {
-    "exec": "/usr/local/bin/memory-module",
+    "exec": "/usr/bin/waybar-module-memory-bin",
     "return-type": "json",
     "interval": 0,
-    "signal": 4, 
+    "signal": 12, 
   },
   
   "custom/ping": {
-    "exec": "/usr/local/bin/ping-module",
+    "exec": "/usr/bin/waybar-module-ping-bin",
     "return-type": "json",
     "interval": 1
   },
 
   // ⚠️ Partially implemented, unexpected behavior may occur.
   "custom/network": {
-    "exec": "/usr/local/bin/network-module",
+    "exec": "/usr/bin/waybar-module-network-bin",
     "return-type": "json",
     "interval": 0,
-    "signal": 3
+    "signal": 13
   }
 }
 ```
