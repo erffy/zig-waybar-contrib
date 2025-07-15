@@ -1,16 +1,14 @@
 const std = @import("std");
+const waybar = @import("waybar.zig");
 const fmt = std.fmt;
 const mem = std.mem;
 const io = std.io;
 const fs = std.fs;
 const math = std.math;
 const time = std.time;
+const posix = std.posix;
 
 const Thread = std.Thread;
-
-const c = @cImport({
-    @cInclude("stdlib.h");
-});
 
 const KILO: comptime_int = 1024;
 const MEGA: comptime_int = KILO * KILO;
@@ -157,11 +155,13 @@ pub fn main() !void {
     var stdout = io.getStdOut().writer();
 
     while (true) {
+        const waybarPid = try waybar.getPid();
+
         const mem_info = try parse();
 
         try stdout.print("{}\n", .{mem_info});
 
-        _ = c.system("pkill -RTMIN+4 waybar");
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 4);
 
         Thread.sleep(1 * time.ns_per_s);
     }

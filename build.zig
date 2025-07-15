@@ -27,7 +27,6 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path(exe.source),
             .target = target,
             .optimize = optimize,
-            .link_libc = true,
             .use_llvm = true
         });
 

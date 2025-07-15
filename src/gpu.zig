@@ -1,14 +1,12 @@
 const std = @import("std");
+const waybar = @import("waybar.zig");
 const fs = std.fs;
 const mem = std.mem;
 const fmt = std.fmt;
 const io = std.io;
 const time = std.time;
+const posix = std.posix;
 const Allocator = mem.Allocator;
-
-const c = @cImport({
-    @cInclude("stdlib.h");
-});
 
 const KILO = 1024;
 const MEGA = 1024 * KILO;
@@ -153,6 +151,8 @@ pub fn main() !void {
     defer allocator.free(base);
 
     while (true) {
+        const waybarPid = try waybar.getPid();
+        
         const info = try getGPUInfo(allocator, base);
         
         try stdout.print(
@@ -167,7 +167,8 @@ pub fn main() !void {
             },
         );
 
-        _ = c.system("pkill -RTMIN+5 waybar");
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 5);
+
         time.sleep(1 * time.ns_per_s);
     }
 }

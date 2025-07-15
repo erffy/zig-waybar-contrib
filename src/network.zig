@@ -1,4 +1,5 @@
 const std = @import("std");
+const waybar = @import("waybar.zig");
 const os = std.os;
 const mem = std.mem;
 const fmt = std.fmt;
@@ -7,10 +8,7 @@ const time = std.time;
 const heap = std.heap;
 const io = std.io;
 const net = std.net;
-
-const c = @cImport({
-    @cInclude("stdlib.h");
-});
+const posix = std.posix;
 
 const NetStats = struct {
     rx_bytes: u64,
@@ -310,6 +308,8 @@ pub fn main() !void {
     const stdout = io.getStdOut().writer();
 
     while (true) {
+        const waybarPid = try waybar.getPid();
+
         const stats = readNetStats() catch {
             try stdout.writeAll("{{}}\n");
             time.sleep(INTERVAL_NS);
@@ -331,7 +331,7 @@ pub fn main() !void {
 
             try stdout.print("{{\"text\":\"{s}\",\"tooltip\":\"Gateway · {s}\\nLocal IP · {s}\\nInterface · {s}\\n  {s} ・   {s}\"}}\n", .{ download_and_upload, "0.0.0.0", "0.0.0.0", stats.iface, download, upload });
 
-            _ = c.system("pkill -RTMIN+3 waybar");
+            if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 3);
         }
 
         last_rx = rx;

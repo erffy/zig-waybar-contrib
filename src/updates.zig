@@ -1,4 +1,5 @@
 const std = @import("std");
+const waybar = @import("waybar.zig");
 const mem = std.mem;
 const process = std.process;
 const heap = std.heap;
@@ -12,10 +13,6 @@ const time = std.time;
 const fmt = std.fmt;
 const ArrayList = std.ArrayList;
 const Thread = std.Thread;
-
-const c = @cImport({
-    @cInclude("stdlib.h");
-});
 
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
@@ -95,6 +92,8 @@ pub fn main() !void {
     const stdout = io.getStdOut().writer();
 
     while (true) {
+        const waybarPid = try waybar.getPid();
+
         var arena = heap.ArenaAllocator.init(heap.page_allocator);
         defer arena.deinit();
         const allocator = arena.allocator();
@@ -153,7 +152,7 @@ pub fn main() !void {
             try stdout.print("{{\"text\":\"  err\",\"tooltip\":\"{s}\"}}\n", .{mem.sliceTo(&err_buf, 0)});
         }
 
-        _ = c.system("pkill -RTMIN+2 waybar");
+        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 2);
 
         Thread.sleep(160 * time.ns_per_s);
     }

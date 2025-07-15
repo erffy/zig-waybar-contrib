@@ -11,7 +11,7 @@ const PingError = error{
     NetworkError,
 };
 
-const TARGET = "8.8.8.8";
+const TARGET = "94.140.14.14";
 const PACKET_SIZE = 64;
 const TIMEOUT_MS: i64 = 10000;
 
