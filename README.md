@@ -55,8 +55,7 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 ## Screenshots
 
 ### Updates
-![Updates Available](assets/updates_available.png)
-![No Updates](assets/updates_noupdate.png)
+![Updates Module](assets/updates.png)
 
 ### GPU
 ![GPU Module](assets/gpu.png)
