@@ -71,7 +71,7 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 
 ### Quick Installation
 
-#### From AUR (Recommended)
+#### [From AUR (Recommended)](https://aur.archlinux.org/packages/zig-waybar-contrib)
 
 You can easily install the latest version of **zig-waybar-contrib** from the Arch User Repository (AUR). This package provides pre-built binaries as `waybar-module-X-bin`.
 
