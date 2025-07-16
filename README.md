@@ -107,17 +107,6 @@ zig build
 sudo cp zig-out/bin/* /usr/local/bin/
 ```
 
-<!--
-### Arch Linux (AUR)
-
-```bash
-# Using your favorite AUR helper
-paru -S zig-waybar-contrib-git
-# or
-yay -S zig-waybar-contrib-git
-```
--->
-
 ## Configuration
 
 ### Basic Waybar Setup
@@ -126,45 +115,51 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
 
 ```jsonc
 {
-  "modules-right": [
-    "custom/updates",
-    "custom/gpu", 
-    "custom/memory",
-    "custom/ping",
-    "custom/network"
+  // Load default module configurations from zig-waybar-contrib
+  "include": [
+    "/etc/zig-waybar-contrib/config.json"
   ],
-  
-  "custom/updates": {
+
+  // Display these modules on the right side of the Waybar
+  "modules-right": [
+    "custom/updates#zwc",
+    "custom/gpu#zwc",
+    "custom/memory#zwc",
+    "custom/ping#zwc",
+    "custom/network#zwc"
+  ],
+
+  // 🛠️ Custom modules configuration
+  "custom/updates#zwc": {
     "exec": "/usr/bin/waybar-module-updates-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 10,
     "escape": true
   },
-  
-  "custom/gpu": {
+
+  "custom/gpu#zwc": {
     "exec": "/usr/bin/waybar-module-gpu-bin",
-    "return-type": "json", 
+    "return-type": "json",
     "interval": 0,
-    "signal": 11,
+    "signal": 11
   },
-  
-  "custom/memory": {
+
+  "custom/memory#zwc": {
     "exec": "/usr/bin/waybar-module-memory-bin",
     "return-type": "json",
     "interval": 0,
-    "signal": 12, 
+    "signal": 12
   },
-  
-  "custom/ping": {
+
+  "custom/ping#zwc": {
     "exec": "/usr/bin/waybar-module-ping-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 13
   },
 
-  // ⚠️ Partially implemented, unexpected behavior may occur.
-  "custom/network": {
+  "custom/network#zwc": {
     "exec": "/usr/bin/waybar-module-network-bin",
     "return-type": "json",
     "interval": 0,
