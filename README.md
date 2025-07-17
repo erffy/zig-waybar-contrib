@@ -95,6 +95,7 @@ Simply extract the downloaded archive and move the binaries to your system’s P
 **Requirements:**
 - Zig: 0.14.0+
 - Git
+- rocm-smi-lib
 
 ```bash
 # Clone the repository
