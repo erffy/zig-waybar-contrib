@@ -2,7 +2,7 @@
 > This project is in active development. As I'm learning Zig, updates may take time. Your contributions, feedback, and patience are greatly appreciated! 🚀
 
 
-# zig-waybar-contrib
+## zig-waybar-contrib
 
 **High-performance Waybar modules written in Zig for efficient system monitoring**
 
@@ -10,18 +10,18 @@
 [![Zig](https://img.shields.io/badge/Zig-0.14+-orange.svg)](https://ziglang.org/)
 [![Waybar](https://img.shields.io/badge/Waybar-Compatible-green.svg)](https://github.com/Alexays/Waybar)
 
-## Overview
+### Overview
 
 `zig-waybar-contrib` is a collection of lightweight, blazingly fast Waybar modules built with Zig. These modules are designed to provide accurate system monitoring with minimal resource usage, taking advantage of Zig's performance characteristics and memory safety.
 
-## Why Zig?
+### Why Zig?
 
 - **Zero-cost abstractions** - Runtime performance without sacrificing code clarity
 - **Compile-time safety** - Catch errors before they reach production
 - **Small binaries** - Minimal overhead for system monitoring
 - **Fast compilation** - Quick iteration during development
 
-## Features
+### Features
 
 - ⚡ **Ultra-fast execution** - Optimized with `ReleaseFast` + LTO + LLVM
 - 🔒 **Memory safe** - No buffer overflows or memory leaks
@@ -30,17 +30,17 @@
 - 🎯 **Waybar native** - JSON output format, seamless integration
 - 🪶 **Lightweight** - Minimal system dependencies
 
-## Available Modules
+### Available Modules
 
 All modules output single-line JSON compatible with Waybar's `custom` module interface.
 
-| Module      | Description                    | Status       | Dependencies | Platforms     | Signal   |
-|-------------|--------------------------------|--------------|--------------|---------------|----------|
-| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`   | Arch Linux    | 10       |
-| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | None         | AMD RX Series | 11       |
-| **Memory**  | RAM usage and statistics       | ✅ Ready     | None         | Linux         | 12       |
-| **Ping**    | Network latency monitoring     | ✅ Ready     | None         | Linux         | 13       |
-| **Network** | Network speed monitoring       | ⚠️ Partially |              | Linux         | 14       |
+| Module      | Description                    | Status       | Dependencies   | Platforms     | Signal   |
+|-------------|--------------------------------|--------------|----------------|---------------|----------|
+| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`     | Arch Linux    | 10       |
+| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib` | AMD RX Series | 11       |
+| **Memory**  | RAM usage and statistics       | ✅ Ready     | None           | Linux         | 12       |
+| **Ping**    | Network latency monitoring     | ✅ Ready     | None           | Linux         | 13       |
+| **Network** | Network speed monitoring       | ⚠️ Partially |                | Linux         | 14       |
 
 <!--
 ### Planned Modules
@@ -52,18 +52,18 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 - [ ] **Temperature** - System thermal monitoring
 -->
 
-## Screenshots
+### Screenshots
 
-### Updates
+#### Updates
 ![Updates Module](assets/updates.png)
 
-### GPU
+#### GPU
 ![GPU Module](assets/gpu.png)
 
-### Memory
+#### Memory
 ![Memory Module](assets/memory.png)
 
-### Ping
+#### Ping
 ![Ping Module](assets/ping.png)
 
 ## Installation
@@ -118,9 +118,9 @@ yay -S zig-waybar-contrib-git
 ```
 -->
 
-## Configuration
+### Configuration
 
-### Basic Waybar Setup
+#### Basic Waybar Setup
 
 Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
 
@@ -191,9 +191,9 @@ export PING_CRIT_MS=200    # Critical latency
 ```
 --->
 
-## Development
+### Development
 
-### Project Structure
+#### Project Structure
 
 ```
 zig-waybar-contrib/
@@ -234,23 +234,23 @@ ls /sys/class/drm/card*/device/
 ```
 -->
 
-## Contributing
+### Contributing
 
 Contributions are welcome! Here's how you can help:
 
-### Code Contributions
+#### Code Contributions
 - 🐛 **Bug Fixes** - Help squash issues
 - ⚡ **Performance Improvements** - Make modules even faster  
 - 🧩 **New Modules** - Add support for more system metrics
 - 🎨 **Code Quality** - Improve readability and maintainability
 
-### Other Ways to Help
+#### Other Ways to Help
 - 📖 **Documentation** - Improve guides and examples
 - 🧪 **Testing** - Report bugs and compatibility issues
 - 💡 **Feature Requests** - Suggest new modules or improvements
 - 🎨 **Themes** - Share your Waybar styling configs
 
-### Development Workflow
+#### Development Workflow
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-module`
@@ -259,16 +259,16 @@ Contributions are welcome! Here's how you can help:
 5. Add tests if applicable
 6. Submit a pull request with a clear description
 
-## Roadmap
+### Roadmap
 
 - [ ] Implement Environment-based configuration
 - [ ] Implement Network speed monitoring
 
-## License
+### License
 
 This project is licensed under the **GNU General Public License v3.0**. See [LICENSE](./LICENSE) for details.
 
-## Acknowledgments
+### Acknowledgments
 
 - **Zig Team** - For creating an amazing systems programming language
 - **Waybar Contributors** - For the excellent status bar that makes this possible  
