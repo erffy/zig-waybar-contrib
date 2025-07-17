@@ -1,0 +1,37 @@
+{
+  "custom/updates#zwc": {
+    "exec": "/usr/bin/waybar-module-updates-bin",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 10,
+    "escape": true
+  },
+  
+  "custom/gpu#zwc": {
+    "exec": "/usr/bin/waybar-module-gpu-bin",
+    "return-type": "json", 
+    "interval": 0,
+    "signal": 11,
+  },
+  
+  "custom/memory#zwc": {
+    "exec": "/usr/bin/waybar-module-memory-bin",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 12, 
+  },
+  
+  "custom/ping#zwc": {
+    "exec": "/usr/bin/waybar-module-ping-bin",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 13
+  },
+
+  "custom/network#zwc": {
+    "exec": "/usr/bin/waybar-module-network-bin",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 14
+  }
+}
