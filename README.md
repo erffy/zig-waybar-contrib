@@ -34,12 +34,12 @@
 
 All modules output single-line JSON compatible with Waybar's `custom` module interface.
 
-| Module      | Description                    | Status       | Dependencies   | Platforms     | Signal   |
-|-------------|--------------------------------|--------------|----------------|---------------|----------|
-| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`     | Arch Linux    | 10       |
-| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib` | AMD RX Series | 11       |
-| **Memory**  | RAM usage and statistics       | ✅ Ready     | None           | Linux         | 12       |
-| **Ping**    | Network latency monitoring     | ✅ Ready     | None           | Linux         | 13       |
+| Module      | Description                    | Status       | Dependencies               | Platforms     | Signal   |
+|-------------|--------------------------------|--------------|----------------------------|---------------|----------|
+| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`                 | Arch Linux    | 10       |
+| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib` or `amdsmi` | AMD RX Series | 11       |
+| **Memory**  | RAM usage and statistics       | ✅ Ready     | None                       | Linux         | 12       |
+| **Ping**    | Network latency monitoring     | ✅ Ready     | None                       | Linux         | 13       |
 
 <!--
 ### Planned Modules
