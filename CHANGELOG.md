@@ -15,6 +15,10 @@ If both are available, `amdsmi.zig` takes precedence.
 
 - Added support for reporting the `amdsmi` version.
 
+#### Build
+
+- Build file improvements
+
 #### Utils
 
 - Moved waybar and format modules to a dedicated shared directory.
