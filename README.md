@@ -94,7 +94,7 @@ Simply extract the downloaded archive and move the binaries to your system’s P
 **Requirements:**
 - Zig: 0.14.0+
 - Git
-- rocm-smi-lib
+- rocm-smi-lib or amdsmi (for gpu module)
 
 ```bash
 # Clone the repository
