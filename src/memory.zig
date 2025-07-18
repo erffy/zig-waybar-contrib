@@ -17,9 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 const std = @import("std");
-const waybar = @import("waybar.zig");
 const fmt = std.fmt;
 const mem = std.mem;
 const io = std.io;
@@ -29,40 +27,11 @@ const time = std.time;
 const posix = std.posix;
 const Thread = std.Thread;
 
-const KILO: comptime_int = 1024;
-const MEGA: comptime_int = KILO * KILO;
-const GIGA: comptime_int = KILO * MEGA;
+const utils = @import("utils");
+const waybar = utils.waybar;
+const format = utils.format;
 
-const FmtSize = struct {
-    size: u64,
-
-    pub inline fn format(self: FmtSize, comptime frmt: []const u8, options: fmt.FormatOptions, writer: anytype) !void {
-        const scaled_size = self.size * KILO;
-
-        return switch (scaled_size) {
-            GIGA...math.maxInt(u64) => {
-                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / GIGA, frmt, options, writer, 0);
-                try writer.writeByte('G');
-            },
-            MEGA...GIGA - 1 => {
-                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / MEGA, frmt, options, writer, 0);
-                try writer.writeByte('M');
-            },
-            KILO...MEGA - 1 => {
-                try fmt.formatType(@as(f64, @floatFromInt(scaled_size)) / KILO, frmt, options, writer, 0);
-                try writer.writeByte('K');
-            },
-            else => {
-                try fmt.formatType(scaled_size, frmt, options, writer, 0);
-                try writer.writeByte('B');
-            },
-        };
-    }
-};
-
-inline fn fmtSize(size: u64) FmtSize {
-    return .{ .size = size };
-}
+const formatSize = format.formatSizeKilo;
 
 const MemoryInfo = struct {
     mem_total: u64 = 0,
@@ -86,35 +55,32 @@ const MemoryInfo = struct {
     page_tables: u64 = 0,
     slab: u64 = 0,
 
-    pub inline fn format(mem_info: MemoryInfo, comptime _: []const u8, _: fmt.FormatOptions, writer: anytype) !void {
-        const total_usage = mem_info.mem_used + mem_info.swap_used;
-        const total_percentage = @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(mem_info.mem_total + mem_info.swap_total)) * 100;
+    pub inline fn toJson(self: MemoryInfo, writer: anytype) !void {
+        const total_usage = self.mem_used + self.swap_used;
+        const total_percentage = @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(self.mem_total + self.swap_total)) * 100;
 
-        try writer.print(
-            "{{\"text\":\"  {d:.2} · {d:.0}%\",\"tooltip\":\"Total · {d:.2}\\nUsed · {d:.2}\\nFree · {d:.2}\\nAvailable · {d:.2}\\nShared · {d:.2}\\nBuffer / Cache · {d:.2}\\n\\nActive · {d:.2}\\nInactive · {d:.2}\\nAnon Pages · {d:.2}\\nMapped · {d:.2}\\nDirty · {d:.2}\\nWriteback · {d:.2}\\nKernel Stack · {d:.2}\\nPage Tables · {d:.2}\\nSlab · {d:.2}\\n\\nSwap Total · {d:.2}\\nSwap Free · {d:.2}\\nSwap Used · {d:.2}\"}}",
-            .{
-                fmtSize(total_usage),
-                total_percentage,
-                fmtSize(mem_info.mem_total),
-                fmtSize(mem_info.mem_used),
-                fmtSize(mem_info.mem_free),
-                fmtSize(mem_info.mem_available),
-                fmtSize(mem_info.mem_shared),
-                fmtSize(mem_info.mem_buff_cache),
-                fmtSize(mem_info.active),
-                fmtSize(mem_info.inactive),
-                fmtSize(mem_info.anon_pages),
-                fmtSize(mem_info.mapped),
-                fmtSize(mem_info.dirty),
-                fmtSize(mem_info.writeback),
-                fmtSize(mem_info.kernel_stack),
-                fmtSize(mem_info.page_tables),
-                fmtSize(mem_info.slab),
-                fmtSize(mem_info.swap_total),
-                fmtSize(mem_info.swap_free),
-                fmtSize(mem_info.swap_used),
-            },
-        );
+        try writer.print("{{\"text\":\"  {d:.2} · {d:.0}%\",\"tooltip\":\"Total · {d:.2}\\nUsed · {d:.2}\\nFree · {d:.2}\\nAvailable · {d:.2}\\nShared · {d:.2}\\nBuffer / Cache · {d:.2}\\n\\nActive · {d:.2}\\nInactive · {d:.2}\\nAnon Pages · {d:.2}\\nMapped · {d:.2}\\nDirty · {d:.2}\\nWriteback · {d:.2}\\nKernel Stack · {d:.2}\\nPage Tables · {d:.2}\\nSlab · {d:.2}\\n\\nSwap Total · {d:.2}\\nSwap Used · {d:.2}\\nSwap Free · {d:.2}\"}}", .{
+            formatSize(total_usage),
+            total_percentage,
+            formatSize(self.mem_total),
+            formatSize(self.mem_used),
+            formatSize(self.mem_free),
+            formatSize(self.mem_available),
+            formatSize(self.mem_shared),
+            formatSize(self.mem_buff_cache),
+            formatSize(self.active),
+            formatSize(self.inactive),
+            formatSize(self.anon_pages),
+            formatSize(self.mapped),
+            formatSize(self.dirty),
+            formatSize(self.writeback),
+            formatSize(self.kernel_stack),
+            formatSize(self.page_tables),
+            formatSize(self.slab),
+            formatSize(self.swap_total),
+            formatSize(self.swap_used),
+            formatSize(self.swap_free),
+        });
     }
 };
 
@@ -174,13 +140,9 @@ pub fn main() !void {
     var stdout = io.getStdOut().writer();
 
     while (true) {
-        const waybarPid = try waybar.getPid();
-
-        const mem_info = try parse();
-
-        try stdout.print("{}\n", .{mem_info});
-
-        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 12);
+        try (try parse()).toJson(stdout);
+        try stdout.writeByte('\n');
+        try waybar.signal(12);
 
         Thread.sleep(1 * time.ns_per_s);
     }

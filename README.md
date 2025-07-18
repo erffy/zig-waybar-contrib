@@ -40,7 +40,6 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 | **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib` | AMD RX Series | 11       |
 | **Memory**  | RAM usage and statistics       | ✅ Ready     | None           | Linux         | 12       |
 | **Ping**    | Network latency monitoring     | ✅ Ready     | None           | Linux         | 13       |
-| **Network** | Network speed monitoring       | ⚠️ Partially |                | Linux         | 14       |
 
 <!--
 ### Planned Modules
@@ -126,8 +125,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "custom/updates#zwc",
     "custom/gpu#zwc",
     "custom/memory#zwc",
-    "custom/ping#zwc",
-    "custom/network#zwc"
+    "custom/ping#zwc"
   ],
 
   // 🛠️ Custom modules configuration
@@ -158,13 +156,6 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "return-type": "json",
     "interval": 0,
     "signal": 13
-  },
-
-  "custom/network#zwc": {
-    "exec": "/usr/bin/waybar-module-network-bin",
-    "return-type": "json",
-    "interval": 0,
-    "signal": 14
   }
 }
 ```
@@ -197,7 +188,6 @@ zig-waybar-contrib/
 │   ├── updates.zig    # Updates module
 │   ├── gpu.zig        # GPU module  
 │   ├── memory.zig     # Memory module
-│   ├── network.zig    # Network module
 │   └── ping.zig       # Ping module
 ├── build.zig          # Build configuration
 └── assets/            # Screenshots
@@ -257,8 +247,7 @@ Contributions are welcome! Here's how you can help:
 
 ### Roadmap
 
-- [ ] Implement Environment-based configuration
-- [ ] Implement Network speed monitoring
+- [ ] Implement configuration support
 
 ### License
 

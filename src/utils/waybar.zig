@@ -23,8 +23,9 @@ const fs = std.fs;
 const ascii = std.ascii;
 const fmt = std.fmt;
 const mem = std.mem;
+const posix = std.posix;
 
-pub fn getPid() !?u32 {
+pub fn pid() !?u32 {
     var dir = try fs.openDirAbsolute("/proc", .{ .iterate = true });
     defer dir.close();
 
@@ -47,4 +48,10 @@ pub fn getPid() !?u32 {
     }
 
     return null;
+}
+
+pub fn signal(code: u8) !void {
+    const wpid = try pid();
+
+    if (wpid) |wwpid| try posix.kill(@intCast(wwpid), 32 + code);
 }

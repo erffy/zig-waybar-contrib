@@ -17,9 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 const std = @import("std");
-const waybar = @import("waybar.zig");
 const fs = std.fs;
 const mem = std.mem;
 const fmt = std.fmt;
@@ -29,50 +27,41 @@ const posix = std.posix;
 const heap = std.heap;
 const Allocator = mem.Allocator;
 
+const utils = @import("utils");
+const waybar = utils.waybar;
+const format = utils.format;
+
+const formatSize = format.formatSize;
+
 const c = @cImport({
     @cInclude("rocm_smi/rocm_smi.h");
 });
 
-const KILO: comptime_int = 1024;
-const MEGA: comptime_int = KILO * KILO;
-const GIGA: comptime_int = KILO * MEGA;
-
 const GPUInfo = struct {
-    temperature: f64,
     gpu_busy: u64,
+    temperature: f64,
     pwm: u64,
     mem_total: u64,
     mem_used: u64,
     mem_free: u64,
-};
 
-const FmtSize = struct {
-    size: u64,
-    pub inline fn format(self: FmtSize, comptime f: []const u8, o: fmt.FormatOptions, w: anytype) !void {
-        return if (self.size >= GIGA) {
-            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / GIGA, f, o, w, 0);
-            try w.writeByte('G');
-        } else if (self.size >= MEGA) {
-            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / MEGA, f, o, w, 0);
-            try w.writeByte('M');
-        } else if (self.size >= KILO) {
-            try fmt.formatType(@as(f64, @floatFromInt(self.size)) / KILO, f, o, w, 0);
-            try w.writeByte('K');
-        } else {
-            try fmt.formatType(self.size, f, o, w, 0);
-            try w.writeByte('B');
-        };
+    pub inline fn toJson(self: GPUInfo, writer: anytype) !void {
+        try writer.print(
+            "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {d:.2}\\nVRAM Used · {d:.2}\\nVRAM Free · {d:.2}\"}}",
+            .{
+                self.gpu_busy,
+                @as(i64, @intFromFloat(self.temperature)),
+                self.pwm,
+                formatSize(self.mem_total),
+                formatSize(self.mem_used),
+                formatSize(self.mem_free),
+            },
+        );
     }
 };
-
-inline fn fmtSize(size: u64) FmtSize {
-    return .{ .size = size };
-}
 
 fn initializeROCmSMI() !u32 {
-    if (c.rsmi_init(0) != c.RSMI_STATUS_SUCCESS) {
-        return error.ROCmSMIInitFailed;
-    }
+    if (c.rsmi_init(0) != c.RSMI_STATUS_SUCCESS) return error.ROCmSMIInitFailed;
 
     var num_devices: u32 = 0;
     if (c.rsmi_num_monitor_devices(&num_devices) != c.RSMI_STATUS_SUCCESS) {
@@ -143,31 +132,15 @@ fn getGPUInfoROCm(device_id: u32) !GPUInfo {
 }
 
 pub fn main() !void {
-    var gpa = heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-
     const stdout = io.getStdOut().writer();
 
     _ = try initializeROCmSMI();
     defer shutdownROCmSMI();
 
     while (true) {
-        const waybarPid = try waybar.getPid();
-        const info = try getGPUInfoROCm(0);
-
-        try stdout.print(
-            "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {d:.2}\\nVRAM Used · {d:.2}\\nVRAM Free · {d:.2}\"}}\n",
-            .{
-                info.gpu_busy,
-                @as(i64, @intFromFloat(info.temperature)),
-                info.pwm,
-                fmtSize(info.mem_total),
-                fmtSize(info.mem_used),
-                fmtSize(info.mem_free),
-            },
-        );
-
-        if (waybarPid) |pid| try posix.kill(@intCast(pid), 32 + 11);
+        try (try getGPUInfoROCm(0)).toJson(stdout);
+        try stdout.writeByte('\n');
+        try waybar.signal(11);
 
         time.sleep(1 * time.ns_per_s);
     }
