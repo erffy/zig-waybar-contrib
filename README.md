@@ -184,13 +184,32 @@ export PING_CRIT_MS=200    # Critical latency
 
 ```
 zig-waybar-contrib/
-├── src/
-│   ├── updates.zig    # Updates module
-│   ├── gpu.zig        # GPU module  
-│   ├── memory.zig     # Memory module
-│   └── ping.zig       # Ping module
-├── build.zig          # Build configuration
-└── assets/            # Screenshots
+│
+├── README.md           # Project overview and usage
+├── CHANGELOG.md        # Version history and changes
+├── LICENSE             # GPL-3.0-only license
+├── config.waybar.jsonc # Sample config for Waybar integration
+├── .gitignore          # Git exclusions
+│
+├── build.zig           # Zig build script
+├── build.zig.zon       # Zig dependency manager (Zon) file
+│
+├── src/                # Source code
+│   │
+│   ├── utils/          # Utility functions and helpers
+│   │   ├── mod.zig     # Module loader and utilities
+│   │   ├── waybar.zig  # Waybar signal help
+│   │   └── format.zig  # Memory formatting utilities
+│   │
+│   ├── gpu/            # GPU backend integrations
+│   │   ├── amdsmi.zig  # AMD SMI (ROCm 5+) API support
+│   │   └── rocmsmi.zig # ROCm SMI fallback support
+│   │
+│   ├── memory.zig      # Memory usage reporting module
+│   ├── ping.zig        # Network latency (ping) module
+│   └── updates.zig     # Package/system update checker
+│
+└── assets/             # Screenshots and visual assets
 ```
 
 <!--
