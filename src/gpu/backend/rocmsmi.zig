@@ -17,6 +17,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+// Reduced support will not receive feature or quality updates.
+// Use amdsmi if possible.
+
 const std = @import("std");
 const fs = std.fs;
 const mem = std.mem;
@@ -28,7 +31,6 @@ const heap = std.heap;
 const Allocator = mem.Allocator;
 
 const utils = @import("utils");
-const waybar = utils.waybar;
 const format = utils.format;
 
 const formatSize = format.formatSize;
@@ -36,6 +38,10 @@ const formatSize = format.formatSize;
 const c = @cImport({
     @cInclude("rocm_smi/rocm_smi.h");
 });
+
+pub const MAX_DEVICES = 32;
+var device_ids: [MAX_DEVICES]u32 = undefined;
+var device_count: usize = 0;
 
 const GPUInfo = struct {
     gpu_busy: u64,
@@ -60,28 +66,47 @@ const GPUInfo = struct {
     }
 };
 
-fn initializeROCmSMI() !u32 {
-    if (c.rsmi_init(0) != c.RSMI_STATUS_SUCCESS) return error.ROCmSMIInitFailed;
+pub fn initialize() !usize {
+    if (c.rsmi_init(0) != c.RSMI_STATUS_SUCCESS)
+        return error.ROCmSMIInitFailed;
 
     var num_devices: u32 = 0;
     if (c.rsmi_num_monitor_devices(&num_devices) != c.RSMI_STATUS_SUCCESS) {
-        _ = c.rsmi_shut_down();
+        _ = shutdown();
         return error.DeviceCountFailed;
     }
 
     if (num_devices == 0) {
-        _ = c.rsmi_shut_down();
+        _ = shutdown();
         return error.NoDevicesFound;
     }
 
-    return num_devices;
+    var i: u32 = 0;
+    device_count = 0;
+
+    while (i < num_devices and device_count < MAX_DEVICES) : (i += 1) {
+        var temp: c.uint64_t = 0;
+        const status = c.rsmi_dev_temp_metric_get(i, c.RSMI_TEMP_TYPE_EDGE, c.RSMI_TEMP_CURRENT, &temp);
+
+        if (status == c.RSMI_STATUS_SUCCESS) {
+            device_ids[device_count] = i;
+            device_count += 1;
+        }
+    }
+
+    if (device_count == 0) {
+        _ = shutdown();
+        return error.NoUsableDevices;
+    }
+
+    return device_count;
 }
 
-fn shutdownROCmSMI() void {
+pub fn shutdown() void {
     _ = c.rsmi_shut_down();
 }
 
-fn getGPUInfoROCm(device_id: u32) !GPUInfo {
+pub fn getGPUInfo(device_id: u32) !GPUInfo {
     var temp: i64 = 0;
     var gpu_busy: u32 = 0;
     var mem_total: u64 = 0;
@@ -129,19 +154,4 @@ fn getGPUInfoROCm(device_id: u32) !GPUInfo {
         .mem_used = mem_used,
         .mem_free = mem_free,
     };
-}
-
-pub fn main() !void {
-    const stdout = io.getStdOut().writer();
-
-    _ = try initializeROCmSMI();
-    defer shutdownROCmSMI();
-
-    while (true) {
-        try (try getGPUInfoROCm(0)).toJson(stdout);
-        try stdout.writeByte('\n');
-        try waybar.signal(11);
-
-        time.sleep(1 * time.ns_per_s);
-    }
 }

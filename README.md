@@ -185,31 +185,34 @@ export PING_CRIT_MS=200    # Critical latency
 ```
 zig-waybar-contrib/
 │
-├── README.md           # Project overview and usage
-├── CHANGELOG.md        # Version history and changes
-├── LICENSE             # GPL-3.0-only license
-├── config.waybar.jsonc # Sample config for Waybar integration
-├── .gitignore          # Git exclusions
+├── README.md               # Project overview, installation, and usage instructions
+├── CHANGELOG.md            # Version history with detailed changes per release
+├── LICENSE                 # Project license (GPL-3.0-only)
+├── config.waybar.jsonc     # Example Waybar module configuration (JSONC format)
+├── .gitignore              # Git exclusions for build artifacts, cache files, etc.
 │
-├── build.zig           # Zig build script
-├── build.zig.zon       # Zig dependency manager (Zon) file
+├── build.zig               # Zig build script for compiling all modules
+├── build.zig.zon           # Zig package and dependency declaration (Zon format)
 │
-├── src/                # Source code
+├── src/                    # Source code
 │   │
-│   ├── utils/          # Utility functions and helpers
-│   │   ├── mod.zig     # Module loader and utilities
-│   │   ├── waybar.zig  # Waybar signal help
-│   │   └── format.zig  # Memory formatting utilities
+│   ├── utils/              # Shared utility modules
+│   │   ├── mod.zig         # Module loader and common interfaces
+│   │   ├── waybar.zig      # Waybar signal sender (e.g., USR1/USR2 signaling)
+│   │   └── format.zig      # Byte/usage formatting helpers (e.g., human-readable memory)
 │   │
-│   ├── gpu/            # GPU backend integrations
-│   │   ├── amdsmi.zig  # AMD SMI (ROCm 5+) API support
-│   │   └── rocmsmi.zig # ROCm SMI fallback support
+│   ├── gpu/                # GPU statistics and backend integration
+│   │   ├── gpu.zig         # Unified GPU module (auto-selects backend at compile time)
+│   │   └── backend/        # Individual backend implementations
+│   │       ├── amdsmi.zig      # AMD SMI interface (ROCm 5.x+)
+│   │       ├── rocmsmi.zig     # Legacy ROCm SMI interface
+│   │       └── nvml.zig        # NVIDIA GPU interface (via NVML/CUDA)
 │   │
-│   ├── memory.zig      # Memory usage reporting module
-│   ├── ping.zig        # Network latency (ping) module
-│   └── updates.zig     # Package/system update checker
+│   ├── memory.zig          # Module for tracking and displaying memory usage
+│   ├── ping.zig            # Module for displaying ping/latency to a target host
+│   └── updates.zig         # Module for checking for system/package updates
 │
-└── assets/             # Screenshots and visual assets
+└── assets/                 # Images, screenshots, and other media assets
 ```
 
 <!--

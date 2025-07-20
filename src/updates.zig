@@ -224,7 +224,7 @@ pub fn main() !void {
         const result = checkupdates(allocator);
         if (result) |updates_output| {
             if (updates_output.len == 0) {
-                try stdout.print("{{}}\n", .{});
+                try stdout.print("{{}}", .{});
             } else {
                 var updates = try allocator.alloc(UpdateInfo, MAX_UPDATES);
                 var updates_count: usize = 0;
@@ -265,14 +265,15 @@ pub fn main() !void {
                 defer allocator.free(json_buffer);
                 escapeJson(output_buffer[0..output_stream.pos], json_buffer);
 
-                try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}\n", .{ updates_count, mem.sliceTo(json_buffer, 0) });
+                try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}", .{ updates_count, mem.sliceTo(json_buffer, 0) });
             }
         } else |err| {
             const msg = fmt.bufPrint(&err_buf, "Error: {s}", .{@errorName(err)}) catch "Unknown";
             escapeJson(msg, &err_buf);
-            try stdout.print("{{\"text\":\"  err\",\"tooltip\":\"{s}\"}}\n", .{mem.sliceTo(&err_buf, 0)});
+            try stdout.print("{{\"text\":\"  err\",\"tooltip\":\"{s}\"}}", .{mem.sliceTo(&err_buf, 0)});
         }
 
+        try stdout.writeByte('\n');
         try waybar.signal(10);
 
         Thread.sleep(160 * time.ns_per_s);

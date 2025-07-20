@@ -1,29 +1,52 @@
-# CHANGELOG
+# Changelog
 
 ## v1.x
 
-### v1.1.0
+### v1.1.1
 
-#### Module: ping
+#### GPU Module
 
-- Added detailed quality information for latency results.
-
-#### Module: gpu
-
-The binary now builds with `amdsmi.zig` if `amdsmi` is installed; otherwise, it falls back to `rocmsmi.zig`.
-If both are available, `amdsmi.zig` takes precedence.
-
-- Added support for reporting the `amdsmi` version.
+- Binary now automatically selects the appropriate backend (on compile time):
+  - Uses `amdsmi.zig` if `amdsmi` is installed.
+  - Uses `rocmsmi.zig` if `amdsmi` is unavailable and `rocm-smi-lib` available.
+  - Uses `nvml` if `cuda` is available
+- Added support for `nvml` (requires CUDA).
+- Support for `rocmsmi` backend is deprecated.
+- Fixed compatibility issues with the `amdsmi` backend.
 
 #### Build
 
-- Build file improvements
+- Improvements to the build system for stability and consistency.
 
-#### Utils
+---
 
-- Moved waybar and format modules to a dedicated shared directory.
+### v1.1.0
 
-#### Project
+#### Ping Module
 
-- Reorganized and reordered the project file tree for better clarity and maintainability.
-- Edited and cleaned up existing files to improve code consistency and readability.
+- Introduced detailed quality metrics for latency results.
+
+#### GPU Module
+
+- Binary now automatically selects the appropriate backend:
+  - Uses `amdsmi.zig` if `amdsmi` is installed.
+  - Falls back to `rocmsmi.zig` if `amdsmi` is unavailable.
+  - `amdsmi.zig` takes precedence if both are present.
+- Added support for `amdsmi` backend
+
+#### Network Module
+
+- **Removed** — functionality has been deprecated or relocated.
+
+#### Build
+
+- Refactored build files for better modularity and ease of use.
+
+#### Utilities
+
+- Moved `waybar` and `format` utilities to a shared `utils/` directory for reuse across modules.
+
+#### Project Structure
+
+- Reorganized file tree for improved clarity and maintainability.
+- Cleaned up and standardized codebase for better readability and consistency.

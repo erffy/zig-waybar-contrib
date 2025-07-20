@@ -7,24 +7,18 @@
     "escape": true
   },
   "custom/gpu#zwc": {
-    "text": "{icon}  {busy}% · {temp}°C",
-    "tooltip": "PWM · {pwm}%\nVRAM Total · {vram_total}\nVRAM Used · {vram_used}\nVRAM Free · {vram_free}",
     "exec": "/usr/bin/waybar-module-gpu-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 11
   },
   "custom/memory#zwc": {
-    "text": "{icon}  {mem_total} · {used_percent}%",
-    "tooltip": "Total · {mem_total}\nUsed · {mem_used}\nFree · {mem_free}\nAvailable · {mem_available}\nShared · {mem_shared}\nBuffer / Cache · {mem_buff_cache}\n\nActive · {active}\nInactive · {inactive}\nAnon Pages · {anon_pages}\nMapped · {mapped}\nDirty · {dirty}\nWriteback · {writeback}\nKernel Stack · {kernel_stack}\nPage Tables · {page_tables}\nSlab · {slab}\n\nSwap Total · {swap_total}\nSwap Free · {swap_free}\nSwap Used · {swap_used}",
     "exec": "/usr/bin/waybar-module-memory-bin",
     "return-type": "json",
     "interval": 0,
     "signal": 12
   },
   "custom/ping#zwc": {
-    "text": "{icon}  {latency}ms",
-    "tooltip": "Target: {target}\nQuality: {quality}",
     "exec": "/usr/bin/waybar-module-ping-bin",
     "return-type": "json",
     "interval": 0,

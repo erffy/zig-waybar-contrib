@@ -17,8 +17,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+
 const std = @import("std");
 const fs = std.fs;
+const builtin = std.builtin;
 const Build = std.Build;
 
 const Executable = struct {
@@ -26,6 +28,7 @@ const Executable = struct {
     source: []const u8,
     link_rocm: bool = false,
     link_amdsmi: bool = false,
+    link_cuda: bool = false,
     run_args: ?[]const []const u8 = null,
 };
 
@@ -47,33 +50,40 @@ pub fn build(b: *Build) void {
 
     const have_amdsmi = fileExists("/opt/rocm/lib/libamd_smi.so");
     const have_rocm = fileExists("/opt/rocm/lib/librocm_smi64.so");
+    const have_cuda = fileExists("/opt/cuda/targets/x86_64-linux/lib/stubs/libnvidia-ml.so");
+
+    const build_options = b.addOptions();
+    build_options.addOption(bool, "has_amdsmi", have_amdsmi);
+    build_options.addOption(bool, "has_rocm", have_rocm);
+    build_options.addOption(bool, "has_nvml", have_cuda);
 
     inline for (static_executables) |exe| {
-        buildExecutable(b, exe, target, optimize);
+        buildExecutable(b, exe, target, optimize, build_options);
     }
 
-    if (have_amdsmi) {
+    if (have_amdsmi or have_rocm or have_cuda) {
         buildExecutable(b, .{
             .name = "gpu",
-            .source = "src/gpu/amdsmi.zig",
-            .link_amdsmi = true,
-        }, target, optimize);
-    } else if (have_rocm) {
-        buildExecutable(b, .{
-            .name = "gpu",
-            .source = "src/gpu/rocmsmi.zig",
-            .link_rocm = true,
-        }, target, optimize);
+            .source = "src/gpu/gpu.zig",
+            .link_amdsmi = have_amdsmi,
+            .link_rocm = have_rocm,
+            .link_cuda = have_cuda,
+        }, target, optimize, build_options);
     }
 }
 
-fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
+fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, optimize: builtin.OptimizeMode, build_options: *Build.Step.Options) void {
     const mod = b.createModule(.{
         .root_source_file = b.path(exe.source),
         .target = target,
         .optimize = optimize,
         .link_libc = true,
     });
+
+    const utils_mod = b.createModule(.{ .root_source_file = b.path("src/utils/mod.zig") });
+
+    mod.addImport("utils", utils_mod);
+    mod.addImport("build_options", build_options.createModule());
 
     const obj = b.addExecutable(.{
         .name = exe.name,
@@ -82,21 +92,23 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
         .use_lld = true,
     });
 
-    const utils_mod = b.createModule(.{
-        .root_source_file = b.path("src/utils/mod.zig"),
-    });
-
-    mod.addImport("utils", utils_mod);
-
     obj.want_lto = true;
 
-    if (exe.link_amdsmi or exe.link_rocm) {
-        obj.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/include" } });
-        obj.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/lib" } });
-    }
+    if (exe.link_amdsmi or exe.link_rocm or exe.link_cuda) {
+        if (exe.link_amdsmi or exe.link_rocm) {
+            obj.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/lib" } });
+            obj.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/include" } });
 
-    if (exe.link_amdsmi) obj.linkSystemLibrary("amd_smi");
-    if (exe.link_rocm) obj.linkSystemLibrary("rocm_smi64");
+            if (exe.link_amdsmi) obj.linkSystemLibrary("amd_smi");
+            if (exe.link_rocm) obj.linkSystemLibrary("rocm_smi64");
+        }
+
+        if (exe.link_cuda) {
+            obj.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/lib" } });
+            obj.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/include" } });
+            obj.linkSystemLibrary("nvidia-ml");
+        }
+    }
 
     const install = b.addInstallArtifact(obj, .{});
     b.getInstallStep().dependOn(&install.step);
