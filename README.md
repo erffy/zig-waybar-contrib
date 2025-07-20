@@ -34,12 +34,12 @@
 
 All modules output single-line JSON compatible with Waybar's `custom` module interface.
 
-| Module      | Description                    | Status       | Dependencies               | Platforms     | Signal   |
-|-------------|--------------------------------|--------------|----------------------------|---------------|----------|
-| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`                 | Arch Linux    | 10       |
-| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib` or `amdsmi` | AMD RX Series | 11       |
-| **Memory**  | RAM usage and statistics       | ✅ Ready     | None                       | Linux         | 12       |
-| **Ping**    | Network latency monitoring     | ✅ Ready     | None                       | Linux         | 13       |
+| Module      | Description                    | Status       | Dependencies                       | Platforms             | Signal   |
+|-------------|--------------------------------|--------------|------------------------------------|-----------------------|----------|
+| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`                         | Arch Linux            | 10       |
+| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib`, `amdsmi` or `cuda` | AMD RX Series, NVIDIA | 11       |
+| **Memory**  | RAM usage and statistics       | ✅ Ready     | None                               | Linux                 | 12       |
+| **Ping**    | Network latency monitoring     | ✅ Ready     | None                               | Linux                 | 13       |
 
 <!--
 ### Planned Modules
@@ -94,7 +94,7 @@ Simply extract the downloaded archive and move the binaries to your system’s P
 **Requirements:**
 - Zig: 0.14.0+
 - Git
-- rocm-smi-lib or amdsmi (for gpu module)
+- rocm-smi-lib, amdsmi or cuda (for gpu module, optional)
 
 ```bash
 # Clone the repository
@@ -117,7 +117,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
 {
   // Load default module configurations from zig-waybar-contrib
   "include": [
-    "/etc/zig-waybar-contrib/config.json"
+    "/etc/zig-waybar-contrib/config.jsonc"
   ],
 
   // Display these modules on the right side of the Waybar
