@@ -2,6 +2,13 @@
 
 ## v1.x
 
+### v1.1.2
+
+#### module: ping
+
+- Now supports domain names instead of just static IPs
+  - The IP address is automatically re-resolved every 30 seconds to ensure accuracy
+
 ### v1.1.1
 
 #### GPU Module

@@ -17,7 +17,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 const std = @import("std");
 const net = std.net;
 const mem = std.mem;
@@ -25,6 +24,8 @@ const posix = std.posix;
 const io = std.io;
 const time = std.time;
 const heap = std.heap;
+const c = std.c;
+const fmt = std.fmt;
 const Thread = std.Thread;
 
 const utils = @import("utils");
@@ -35,9 +36,13 @@ const PingError = error{
     NetworkError,
 };
 
-const TARGET = "94.140.14.14";
+var TARGET: []const u8 = undefined;
+const DOMAIN = "google.com";
+const PORT = "80";
 const PACKET_SIZE = 64;
 const TIMEOUT_MS: i64 = 10000;
+const UPDATE_MS: i64 = 30;
+var last_update_ms: i64 = 0;
 
 const PingResult = struct {
     icon: []const u8 = "",
@@ -46,9 +51,12 @@ const PingResult = struct {
     quality: []const u8,
 
     pub inline fn format(self: PingResult, writer: anytype) !void {
+        const now = time.milliTimestamp();
+        const next_update_sec = @max(0, UPDATE_MS - (@divTrunc(now - last_update_ms, 1000)));
+
         try writer.print(
-            "{{\"text\":\"  {d}ms\", \"tooltip\":\"Quality: {s}\\nTarget: {s}\"}}",
-            .{ self.latency, self.quality, self.target },
+            "{{\"text\":\"  {d}ms\", \"tooltip\":\"Quality · {s}\\nDomain · {s}\\nDomain IP · {s}\\nDomain IP Update · {d}s\"}}",
+            .{ self.latency, self.quality, DOMAIN, self.target, next_update_sec },
         );
     }
 };
@@ -105,6 +113,76 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     return latency;
 }
 
+fn resolveIP(allocator: mem.Allocator, domain: []const u8, port: []const u8) !?[]const u8 {
+    const domain_cstr = try allocator.dupeZ(u8, domain);
+    defer allocator.free(domain_cstr);
+    const port_cstr = try allocator.dupeZ(u8, port);
+    defer allocator.free(port_cstr);
+
+    const hints = c.addrinfo{
+        .family = posix.AF.UNSPEC,
+        .socktype = posix.SOCK.STREAM,
+        .protocol = 0,
+        .flags = c.AI{},
+        .addrlen = 0,
+        .canonname = null,
+        .addr = null,
+        .next = null,
+    };
+
+    var result: ?*c.addrinfo = null;
+    _ = c.getaddrinfo(domain_cstr.ptr, port_cstr.ptr, &hints, &result);
+    defer if (result) |res| c.freeaddrinfo(res);
+
+    const ai = result;
+    if (ai) |node| {
+        const sockaddr = node.addr.?;
+
+        switch (sockaddr.family) {
+            posix.AF.INET => {
+                const ipv4_sockaddr = @as(*const posix.sockaddr.in, @ptrCast(@alignCast(node.addr)));
+
+                const addr_bytes = mem.asBytes(&ipv4_sockaddr.addr);
+                return try fmt.allocPrint(allocator, "{}.{}.{}.{}", .{ addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3] });
+            },
+            posix.AF.INET6 => {
+                const ipv6_sockaddr = @as(*const posix.sockaddr.in6, @ptrCast(@alignCast(node.addr)));
+                const addr_bytes = mem.asBytes(&ipv6_sockaddr.addr);
+
+                var ip_buffer: [39]u8 = undefined;
+                var ip_len: usize = 0;
+
+                for (0..16) |i| {
+                    if (i > 0 and i % 2 == 0) {
+                        ip_buffer[ip_len] = ':';
+                        ip_len += 1;
+                    }
+                    const hex_chars = fmt.bufPrint(ip_buffer[ip_len..], "{x:0>2}", .{addr_bytes[i]}) catch unreachable;
+                    ip_len += hex_chars.len;
+                }
+
+                return try allocator.dupe(u8, ip_buffer[0..ip_len]);
+            },
+            else => {
+                return null;
+            },
+        }
+    }
+
+    return null;
+}
+
+fn updateIP(allocator: mem.Allocator) !void {
+    while (true) {
+        if (try resolveIP(allocator, DOMAIN, PORT)) |ip| {
+            TARGET = ip;
+            last_update_ms = time.milliTimestamp();
+        }
+
+        Thread.sleep(UPDATE_MS * time.ns_per_s);
+    }
+}
+
 fn quality(latency: i64) []const u8 {
     return switch (latency) {
         -999_999_999...-1 => "Down",
@@ -125,6 +203,9 @@ fn quality(latency: i64) []const u8 {
 
 pub fn main() !void {
     const stdout = io.getStdOut().writer();
+    const allocator = heap.page_allocator;
+
+    _ = try Thread.spawn(.{}, updateIP, .{allocator});
 
     while (true) {
         var buffer: [PACKET_SIZE]u8 = undefined;

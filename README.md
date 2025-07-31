@@ -194,6 +194,8 @@ zig-waybar-contrib/
 ├── build.zig               # Zig build script for compiling all modules
 ├── build.zig.zon           # Zig package and dependency declaration (Zon format)
 │
+├── tests/                  # Test files
+│
 ├── src/                    # Source code
 │   │
 │   ├── utils/              # Shared utility modules
