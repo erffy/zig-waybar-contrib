@@ -84,11 +84,6 @@ paru -S zig-waybar-contrib
 yay -S zig-waybar-contrib
 ```
 
-#### From GitHub Releases
-
-Download pre-compiled binaries from the [GitHub Releases page](https://github.com/erffy/zig-waybar-contrib/releases).
-Simply extract the downloaded archive and move the binaries to your system’s PATH or use them directly.
-
 ### Build from Source
 
 **Requirements:**
