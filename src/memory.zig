@@ -141,7 +141,9 @@ pub fn main() !void {
     var stdout = io.getStdOut().writer();
 
     while (true) {
-        try (try parse()).toJson(stdout);
+        const memInfo = try parse();
+
+        try memInfo.toJson(stdout);
         try stdout.writeByte('\n');
         try waybar.signal(12);
 

@@ -47,7 +47,9 @@ pub fn main() !void {
     defer SMI.shutdown();
 
     while (true) {
-        try (try SMI.getGPUInfo(handle)).toJson(stdout);
+        const gpuInfo = try SMI.getGPUInfo(handle);
+
+        try gpuInfo.toJson(stdout);
         try stdout.writeByte('\n');
         try waybar.signal(11);
 
