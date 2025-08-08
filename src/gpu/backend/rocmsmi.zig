@@ -43,7 +43,7 @@ pub const MAX_DEVICES = 32;
 var device_ids: [MAX_DEVICES]u32 = undefined;
 var device_count: usize = 0;
 
-const GPUInfo = struct {
+pub const GPUInfo = struct {
     gpu_busy: u64,
     temperature: f64,
     pwm: u64,
@@ -51,7 +51,7 @@ const GPUInfo = struct {
     mem_used: u64,
     mem_free: u64,
 
-    pub inline fn toJson(self: GPUInfo, writer: anytype) !void {
+    pub inline fn json(self: GPUInfo, writer: anytype) !void {
         try writer.print(
             "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {d:.2}\\nVRAM Used · {d:.2}\\nVRAM Free · {d:.2}\"}}",
             .{

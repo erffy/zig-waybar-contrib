@@ -31,7 +31,7 @@ const c = @cImport({
     @cInclude("nvml.h");
 });
 
-const GPUInfo = struct {
+pub const GPUInfo = struct {
     gpu_busy: u64,
     temperature: f64,
     pwm: u64,
@@ -39,7 +39,7 @@ const GPUInfo = struct {
     mem_used: u64,
     mem_free: u64,
 
-    pub inline fn toJson(self: GPUInfo, writer: anytype) !void {
+    pub inline fn json(self: GPUInfo, writer: anytype) !void {
         try writer.print(
             "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {d:.2}\\nVRAM Used · {d:.2}\\nVRAM Free · {d:.2}\"}}",
             .{
@@ -69,11 +69,11 @@ pub fn initialize() !c.nvmlDevice_t {
     return handle;
 }
 
-pub  fn shutdown() void {
+pub fn shutdown() void {
     _ = c.nvmlShutdown();
 }
 
-pub  fn getGPUInfo(handle: c.nvmlDevice_t) !GPUInfo {
+pub fn getGPUInfo(handle: c.nvmlDevice_t) !GPUInfo {
     var util: c.nvmlUtilization_t = undefined;
     _ = c.nvmlDeviceGetUtilizationRates(handle, &util);
 

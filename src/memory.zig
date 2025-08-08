@@ -55,7 +55,7 @@ const MemoryInfo = struct {
     page_tables: u64 = 0,
     slab: u64 = 0,
 
-    pub inline fn toJson(self: MemoryInfo, w: anytype) !void {
+    pub inline fn json(self: MemoryInfo, w: anytype) !void {
         const total_usage = self.mem_used + self.swap_used;
         const denom = self.mem_total + self.swap_total;
         const pct: f64 = if (denom == 0) 0 else @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(denom)) * 100.0;
@@ -200,7 +200,7 @@ pub fn main() !void {
 
         const mem_info = try parse(buf[0..n]);
 
-        try mem_info.toJson(stdout);
+        try mem_info.json(stdout);
         try stdout.writeByte('\n');
         try waybar.signal(12);
 
