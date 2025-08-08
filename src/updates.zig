@@ -139,15 +139,7 @@ noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
         else => return err,
     };
 
-    const sync_result = try runCommand(allocator, &[_][]const u8{
-        "fakeroot",
-        "pacman",
-        "-Sy",
-        "--dbpath",
-        db_path,
-        "--logfile",
-        "/dev/null",
-    });
+    const sync_result = try runCommand(allocator, &[_][]const u8{ "fakeroot", "pacman", "-Sy", "--dbpath", db_path, "--logfile", "/dev/null" });
 
     if (sync_result != 0) {
         fs.deleteTreeAbsolute(db_path) catch {};
@@ -164,12 +156,7 @@ noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
 }
 
 noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
-    var child = process.Child.init(&[_][]const u8{
-        "pacman",
-        "-Qu",
-        "--dbpath",
-        db_path,
-    }, allocator);
+    var child = process.Child.init(&[_][]const u8{ "pacman", "-Qu", "--dbpath", db_path }, allocator);
 
     child.stdout_behavior = .Pipe;
     child.stderr_behavior = .Pipe;
@@ -214,12 +201,14 @@ inline fn runCommand(allocator: mem.Allocator, argv: []const []const u8) !u8 {
 pub fn main() !void {
     const stdout = io.getStdOut().writer();
 
-    while (true) {
-        var arena = heap.ArenaAllocator.init(heap.page_allocator);
-        defer arena.deinit();
-        const allocator = arena.allocator();
+    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
-        var err_buf: [512]u8 = undefined;
+    var err_buf: [512]u8 = undefined;
+
+    while (true) {
+        _ = arena.reset(.free_all);
 
         const result = checkupdates(allocator);
         if (result) |updates_output| {
@@ -233,16 +222,13 @@ pub fn main() !void {
                 while (lines.next()) |line| {
                     if (updates_count >= MAX_UPDATES) break;
                     if (line.len == 0) continue;
-
                     if (parseLine(line, &updates[updates_count])) updates_count += 1;
                 }
 
                 sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
 
-                var output_buffer = try allocator.alloc(u8, BUFFER_SIZE * MAX_UPDATES);
-                defer allocator.free(output_buffer);
-
-                var output_stream = io.fixedBufferStream(output_buffer);
+                var output_buffer: [BUFFER_SIZE * MAX_UPDATES]u8 = undefined;
+                var output_stream = io.fixedBufferStream(&output_buffer);
                 const writer = output_stream.writer();
 
                 for (updates[0..updates_count], 0..) |update, i| {
@@ -259,13 +245,13 @@ pub fn main() !void {
                 }
 
                 const written = output_stream.pos;
-                if (written > 0 and output_buffer[written - 1] == '\n') output_stream.pos -= 1;
+                if (written > 0 and output_buffer[written - 1] == '\n')
+                    output_stream.pos -= 1;
 
-                const json_buffer = try allocator.alloc(u8, written * 2);
-                defer allocator.free(json_buffer);
-                escapeJson(output_buffer[0..output_stream.pos], json_buffer);
+                var json_buffer: [BUFFER_SIZE * 2]u8 = undefined;
+                escapeJson(output_buffer[0..output_stream.pos], &json_buffer);
 
-                try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}", .{ updates_count, mem.sliceTo(json_buffer, 0) });
+                try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}", .{ updates_count, mem.sliceTo(&json_buffer, 0) });
             }
         } else |err| {
             const msg = fmt.bufPrint(&err_buf, "Error: {s}", .{@errorName(err)}) catch "Unknown";

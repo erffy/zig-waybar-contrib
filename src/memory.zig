@@ -19,13 +19,12 @@
 
 
 const std = @import("std");
-const fmt = std.fmt;
 const mem = std.mem;
 const io = std.io;
 const fs = std.fs;
-const math = std.math;
 const time = std.time;
-const posix = std.posix;
+const fmt = std.fmt;
+const StaticStringMap = std.StaticStringMap;
 const Thread = std.Thread;
 
 const utils = @import("utils");
@@ -56,94 +55,152 @@ const MemoryInfo = struct {
     page_tables: u64 = 0,
     slab: u64 = 0,
 
-    pub inline fn toJson(self: MemoryInfo, writer: anytype) !void {
+    pub inline fn toJson(self: MemoryInfo, w: anytype) !void {
         const total_usage = self.mem_used + self.swap_used;
-        const total_percentage = @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(self.mem_total + self.swap_total)) * 100;
+        const denom = self.mem_total + self.swap_total;
+        const pct: f64 = if (denom == 0) 0 else @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(denom)) * 100.0;
 
-        try writer.print("{{\"text\":\"  {d:.2} · {d:.0}%\",\"tooltip\":\"Total · {d:.2}\\nUsed · {d:.2}\\nFree · {d:.2}\\nAvailable · {d:.2}\\nShared · {d:.2}\\nBuffer / Cache · {d:.2}\\n\\nActive · {d:.2}\\nInactive · {d:.2}\\nAnon Pages · {d:.2}\\nMapped · {d:.2}\\nDirty · {d:.2}\\nWriteback · {d:.2}\\nKernel Stack · {d:.2}\\nPage Tables · {d:.2}\\nSlab · {d:.2}\\n\\nSwap Total · {d:.2}\\nSwap Used · {d:.2}\\nSwap Free · {d:.2}\"}}", .{
-            formatSize(total_usage),
-            total_percentage,
-            formatSize(self.mem_total),
-            formatSize(self.mem_used),
-            formatSize(self.mem_free),
-            formatSize(self.mem_available),
-            formatSize(self.mem_shared),
-            formatSize(self.mem_buff_cache),
-            formatSize(self.active),
-            formatSize(self.inactive),
-            formatSize(self.anon_pages),
-            formatSize(self.mapped),
-            formatSize(self.dirty),
-            formatSize(self.writeback),
-            formatSize(self.kernel_stack),
-            formatSize(self.page_tables),
-            formatSize(self.slab),
-            formatSize(self.swap_total),
-            formatSize(self.swap_used),
-            formatSize(self.swap_free),
-        });
+        try w.print(
+            "{{\"text\":\"  {d:.2} · {d:.0}%\",\"tooltip\":\"Total · {d:.2}\\nUsed · {d:.2}\\nFree · {d:.2}\\nAvailable · {d:.2}\\nShared · {d:.2}\\nBuffer / Cache · {d:.2}\\n\\nActive · {d:.2}\\nInactive · {d:.2}\\nAnon Pages · {d:.2}\\nMapped · {d:.2}\\nDirty · {d:.2}\\nWriteback · {d:.2}\\nKernel Stack · {d:.2}\\nPage Tables · {d:.2}\\nSlab · {d:.2}\\n\\nSwap Total · {d:.2}\\nSwap Used · {d:.2}\\nSwap Free · {d:.2}\"}}",
+            .{
+                formatSize(total_usage),
+                pct,
+                formatSize(self.mem_total),
+                formatSize(self.mem_used),
+                formatSize(self.mem_free),
+                formatSize(self.mem_available),
+                formatSize(self.mem_shared),
+                formatSize(self.mem_buff_cache),
+                formatSize(self.active),
+                formatSize(self.inactive),
+                formatSize(self.anon_pages),
+                formatSize(self.mapped),
+                formatSize(self.dirty),
+                formatSize(self.writeback),
+                formatSize(self.kernel_stack),
+                formatSize(self.page_tables),
+                formatSize(self.slab),
+                formatSize(self.swap_total),
+                formatSize(self.swap_used),
+                formatSize(self.swap_free),
+            },
+        );
     }
 };
 
-inline fn asInt(s: []const u8) u128 {
-    var buf = [1]u8{0} ** 16;
-    if (s.len <= buf.len) @memcpy(buf[0..s.len], s);
-    return @bitCast(buf);
+const Key = enum {
+    MemTotal,
+    MemFree,
+    MemAvailable,
+    Buffers,
+    Cached,
+    Shmem,
+    SwapTotal,
+    SwapFree,
+    Active,
+    Inactive,
+    AnonPages,
+    Mapped,
+    Dirty,
+    Writeback,
+    KernelStack,
+    PageTables,
+    Slab,
+};
+
+const key_map = StaticStringMap(Key).initComptime(.{
+    .{ "MemTotal", .MemTotal },
+    .{ "MemFree", .MemFree },
+    .{ "MemAvailable", .MemAvailable },
+    .{ "Buffers", .Buffers },
+    .{ "Cached", .Cached },
+    .{ "Shmem", .Shmem },
+    .{ "SwapTotal", .SwapTotal },
+    .{ "SwapFree", .SwapFree },
+    .{ "Active", .Active },
+    .{ "Inactive", .Inactive },
+    .{ "AnonPages", .AnonPages },
+    .{ "Mapped", .Mapped },
+    .{ "Dirty", .Dirty },
+    .{ "Writeback", .Writeback },
+    .{ "KernelStack", .KernelStack },
+    .{ "PageTables", .PageTables },
+    .{ "Slab", .Slab },
+});
+
+fn parseValueU64(s: []const u8) !u64 {
+    var it = mem.tokenizeAny(u8, s, " \t");
+    if (it.next()) |num| return fmt.parseUnsigned(u64, num, 10);
+    return error.Invalid;
 }
 
-noinline fn parse() !MemoryInfo {
-    var file_buf: [1024]u8 = undefined;
-    var content = try fs.cwd().readFile("/proc/meminfo", &file_buf);
-
-    var result = MemoryInfo{};
+fn parse(buf: []const u8) !MemoryInfo {
+    var info = MemoryInfo{};
     var buffers: u64 = 0;
     var cached: u64 = 0;
-    var pos: usize = 0;
-    while (mem.indexOfScalarPos(u8, content, pos, ':')) |idx| {
-        const label = content[pos..idx];
-        var name_int: u128 = 0;
-        const name_buf = mem.asBytes(&name_int);
-        @memcpy(name_buf[0..label.len], label);
-        const line_start = idx + 1;
-        pos = (mem.indexOfScalarPos(u8, content, line_start, '\n') orelse break) + 1;
 
-        const value_start = mem.trimLeft(u8, content[line_start..pos], " ");
-        const end_index = mem.indexOfScalar(u8, value_start, ' ') orelse value_start.len;
-        const value_str = value_start[0..end_index];
-        switch (name_int) {
-            asInt("MemTotal") => result.mem_total = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("MemFree") => result.mem_free = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("MemAvailable") => result.mem_available = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Buffers") => buffers = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Cached") => cached = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Shmem") => result.mem_shared = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("SwapTotal") => result.swap_total = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("SwapFree") => result.swap_free = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Active") => result.active = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Inactive") => result.inactive = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("AnonPages") => result.anon_pages = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Mapped") => result.mapped = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Dirty") => result.dirty = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Writeback") => result.writeback = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("KernelStack") => result.kernel_stack = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("PageTables") => result.page_tables = try fmt.parseUnsigned(u64, value_str, 10),
-            asInt("Slab") => result.slab = try fmt.parseUnsigned(u64, value_str, 10),
-            else => {},
+    var it = mem.splitScalar(u8, buf, '\n');
+    while (it.next()) |line| {
+        if (line.len == 0) continue;
+        const colon = mem.indexOfScalar(u8, line, ':') orelse continue;
+        const key = line[0..colon];
+        const rest = line[colon + 1 ..];
+
+        if (key_map.get(key)) |which| {
+            const v = parseValueU64(rest) catch continue;
+            switch (which) {
+                .MemTotal => info.mem_total = v,
+                .MemFree => info.mem_free = v,
+                .MemAvailable => info.mem_available = v,
+                .Buffers => buffers = v,
+                .Cached => cached = v,
+                .Shmem => info.mem_shared = v,
+                .SwapTotal => info.swap_total = v,
+                .SwapFree => info.swap_free = v,
+                .Active => info.active = v,
+                .Inactive => info.inactive = v,
+                .AnonPages => info.anon_pages = v,
+                .Mapped => info.mapped = v,
+                .Dirty => info.dirty = v,
+                .Writeback => info.writeback = v,
+                .KernelStack => info.kernel_stack = v,
+                .PageTables => info.page_tables = v,
+                .Slab => info.slab = v,
+            }
         }
     }
-    result.mem_buff_cache = buffers + cached;
-    result.mem_used = result.mem_total - result.mem_available;
-    result.swap_used = result.swap_total - result.swap_free;
-    return result;
+
+    info.mem_buff_cache = buffers + cached;
+
+    if (info.mem_available == 0 and info.mem_total != 0) {
+        const freeish = info.mem_free + info.mem_buff_cache;
+        info.mem_available = if (freeish > info.mem_total) 0 else info.mem_total - (info.mem_total - freeish);
+    }
+
+    if (info.mem_total >= info.mem_available) {
+        info.mem_used = info.mem_total - info.mem_available;
+    } else info.mem_used = 0;
+
+    if (info.swap_total >= info.swap_free) {
+        info.swap_used = info.swap_total - info.swap_free;
+    } else info.swap_used = 0;
+
+    return info;
 }
 
 pub fn main() !void {
     var stdout = io.getStdOut().writer();
 
-    while (true) {
-        const memInfo = try parse();
+    var buf: [8 * 1024]u8 = undefined;
 
-        try memInfo.toJson(stdout);
+    while (true) {
+        var f = try fs.openFileAbsolute("/proc/meminfo", .{ .mode = .read_only });
+        const n = try f.readAll(&buf);
+        f.close();
+
+        const mem_info = try parse(buf[0..n]);
+
+        try mem_info.toJson(stdout);
         try stdout.writeByte('\n');
         try waybar.signal(12);
 

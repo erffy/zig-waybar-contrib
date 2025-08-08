@@ -2,6 +2,21 @@
 
 ## v1.x
 
+### v1.1.3
+
+#### module: memory, updates, ping
+
+- General code improvements for better readability and performance
+
+#### module: updates
+
+- Optimize `ArenaAllocator` usage to reduce heap allocations and improve memory management
+
+#### module: ping
+
+- Remove IPv6 detection for simplification
+- Replace `heap.page_allocator` with `ArenaAllocator` for more efficient memory allocation
+
 ### v1.1.2
 
 #### module: ping
