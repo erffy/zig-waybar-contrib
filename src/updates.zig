@@ -17,7 +17,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 const std = @import("std");
 const mem = std.mem;
 const process = std.process;
@@ -35,6 +34,8 @@ const Thread = std.Thread;
 
 const utils = @import("utils");
 const waybar = utils.waybar;
+
+const resolveIp = @import("ping.zig").resolveIP;
 
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
@@ -208,6 +209,10 @@ pub fn main() !void {
     var err_buf: [512]u8 = undefined;
 
     while (true) {
+        while (try resolveIp(allocator, "google.com", "80") == null) {
+            Thread.sleep(500 * time.ns_per_ms);
+        }
+
         _ = arena.reset(.free_all);
 
         const result = checkupdates(allocator);

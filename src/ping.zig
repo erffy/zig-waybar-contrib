@@ -114,7 +114,7 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     return latency;
 }
 
-fn resolveIP(allocator: mem.Allocator, domain: []const u8, port: []const u8) !?[]const u8 {
+pub fn resolveIP(allocator: mem.Allocator, domain: []const u8, port: []const u8) !?[]const u8 {
     const domain_cstr = try allocator.dupeZ(u8, domain);
     defer allocator.free(domain_cstr);
     const port_cstr = try allocator.dupeZ(u8, port);
