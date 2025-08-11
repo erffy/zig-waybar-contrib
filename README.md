@@ -1,14 +1,10 @@
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > This project is in active development. As I'm learning Zig, updates may take time. Your contributions, feedback, and patience are greatly appreciated! 🚀
 
-
-## zig-waybar-contrib
+## zig-waybar-contrib [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://gnu.org/licenses/gpl-3.0) [![Zig](https://img.shields.io/badge/Zig-0.14+-orange.svg)](https://ziglang.org/) [![Waybar](https://img.shields.io/badge/Waybar-Compatible-green.svg)](https://github.com/Alexays/Waybar)
 
 **High-performance Waybar modules written in Zig for efficient system monitoring**
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://gnu.org/licenses/gpl-3.0)
-[![Zig](https://img.shields.io/badge/Zig-0.14+-orange.svg)](https://ziglang.org/)
-[![Waybar](https://img.shields.io/badge/Waybar-Compatible-green.svg)](https://github.com/Alexays/Waybar)
 
 ### Overview
 
@@ -16,52 +12,49 @@
 
 ### Why Zig?
 
-- **Zero-cost abstractions** - Runtime performance without sacrificing code clarity
-- **Compile-time safety** - Catch errors before they reach production
-- **Small binaries** - Minimal overhead for system monitoring
-- **Fast compilation** - Quick iteration during development
+- **Zero-Cost Abstractions** - Runtime performance without sacrificing code clarity
+- **Compile-Time Safety** - Catch errors before they reach production
+- **Small Binaries** - Minimal overhead for system monitoring
+- **Fast Compilation** - Quick iteration during development
 
 ### Features
 
-- ⚡ **Ultra-fast execution** - Optimized with `ReleaseFast` + LTO + LLVM
-- 🔒 **Memory safe** - No buffer overflows or memory leaks
-- 🧩 **Modular design** - Include only what you need
-- 📊 **Real-time data** - Accurate, up-to-date system metrics
-- 🎯 **Waybar native** - JSON output format, seamless integration
+- ⚡ **Ultra-Fast Execution** - Optimized with `ReleaseFast` + LTO + LLVM
+- 🔒 **Memory Safe** - No buffer overflows or memory leaks
+- 📊 **Real-Time Data** - Accurate, up-to-date system metrics
+- 🎯 **Waybar Native** - JSON output format, seamless integration
 - 🪶 **Lightweight** - Minimal system dependencies
 
 ### Available Modules
 
-All modules output single-line JSON compatible with Waybar's `custom` module interface.
+> All modules output single-line JSON compatible with Waybar’s `custom` module interface.
 
-| Module      | Description                    | Status       | Dependencies                       | Platforms             | Signal   |
-|-------------|--------------------------------|--------------|------------------------------------|-----------------------|----------|
-| **Updates** | System package update tracker  | ✅ Ready     | `fakeroot`                         | Arch Linux            | 10       |
-| **GPU**     | GPU usage, temperature, memory | ✅ Ready     | `rocm-smi-lib`, `amdsmi` or `cuda` | AMD RX Series, NVIDIA | 11       |
-| **Memory**  | RAM usage and statistics       | ✅ Ready     | None                               | Linux                 | 12       |
-| **Ping**    | Network latency monitoring     | ✅ Ready     | None                               | Linux                 | 13       |
+- **Updates** – Tracks system package updates
+  - **Dependencies:** `fakeroot`
+  - **Platforms:** Arch Linux
+  - **Signal:** 10
 
-<!--
-### Planned Modules
+- **GPU** – Monitors GPU usage, temperature, memory, and fan/PWM
+  - **Dependencies:** `rocm-smi-lib`, `amdsmi`, or `cuda`
+  - **Platforms:** Any Linux
+  - **Signal:** 11
+  - **Notes:** Currently Intel GPUs is not supported
 
-- [ ] **CPU** - Processor usage and frequency monitoring  
-- [ ] **Disk** - Storage usage and I/O statistics
-- [ ] **Network** - Bandwidth and connection monitoring
-- [ ] **Battery** - Power status for laptops
-- [ ] **Temperature** - System thermal monitoring
--->
+- **Memory** – RAM usage and statistics
+  - **Platforms:** Any Linux
+  - **Signal:** 12
+
+- **Ping** – Measures network latency
+  - **Platforms:** Any Linux
+  - **Signal:** 13
 
 ### Screenshots
-
 #### Updates
 ![Updates Module](assets/updates.png)
-
 #### GPU
 ![GPU Module](assets/gpu.png)
-
 #### Memory
 ![Memory Module](assets/memory.png)
-
 #### Ping
 ![Ping Module](assets/ping.png)
 
@@ -71,7 +64,7 @@ All modules output single-line JSON compatible with Waybar's `custom` module int
 
 #### [From AUR (Recommended)](https://aur.archlinux.org/packages/zig-waybar-contrib)
 
-You can easily install the latest version of **zig-waybar-contrib** from the Arch User Repository (AUR). 
+You can easily install the latest version of **zig-waybar-contrib** from the AUR.
 This package provides pre-built binaries as `waybar-module-X-bin`.
 
 Use your preferred AUR helper:
@@ -84,12 +77,14 @@ paru -S zig-waybar-contrib
 yay -S zig-waybar-contrib
 ```
 
-### Build from Source
+#### Build from Source
 
 **Requirements:**
-- Zig: 0.14.0+
-- Git
-- rocm-smi-lib, amdsmi or cuda (for gpu module, optional)
+
+- `zig` (0.14+) — for building the code
+- `git` — for cloning the repository
+- `rocm-smi-lib`, `amdsmi` — AMD GPU backend (optional)
+- `cuda` — NVIDIA GPU backend (optional)
 
 ```bash
 # Clone the repository
@@ -99,7 +94,7 @@ git clone https://github.com/erffy/zig-waybar-contrib.git && cd zig-waybar-contr
 zig build
 
 # Install to system
-sudo cp zig-out/bin/* /usr/local/bin/
+sudo cp -r zig-out/bin/* /usr/local/bin/
 ```
 
 ### Configuration
@@ -155,24 +150,6 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
 }
 ```
 
-<!--
-
-PLANNED FEATURE
-
-### Advanced Configuration
-
-#### Module-specific Settings
-
-Each module accepts environment variables for customization:
-
-```bash
-# Ping module settings
-export PING_HOST=8.8.8.8   # Target host
-export PING_WARN_MS=50     # Warning latency
-export PING_CRIT_MS=200    # Critical latency
-```
---->
-
 ### Development
 
 #### Project Structure
@@ -212,40 +189,13 @@ zig-waybar-contrib/
 └── assets/                 # Images, screenshots, and other media assets
 ```
 
-<!--
-## Troubleshooting
-
-### Common Issues
-
-**Module not updating:**
-```bash
-# Check if module runs standalone
-/usr/local/bin/gpu-module
-
-# Verify Waybar can execute it
-waybar -l debug
-```
-
-**Permission errors:**
-```bash
-# Ensure modules are executable
-chmod +x /usr/local/bin/*-module
-```
-
-**GPU module shows no data (AMD):**
-```bash
-# Check GPU files exist
-ls /sys/class/drm/card*/device/
-```
--->
-
 ### Contributing
 
 Contributions are welcome! Here's how you can help:
 
 #### Code Contributions
 - 🐛 **Bug Fixes** - Help squash issues
-- ⚡ **Performance Improvements** - Make modules even faster  
+- ⚡ **Performance Improvements** - Make modules even faster
 - 🧩 **New Modules** - Add support for more system metrics
 - 🎨 **Code Quality** - Improve readability and maintainability
 
@@ -253,7 +203,6 @@ Contributions are welcome! Here's how you can help:
 - 📖 **Documentation** - Improve guides and examples
 - 🧪 **Testing** - Report bugs and compatibility issues
 - 💡 **Feature Requests** - Suggest new modules or improvements
-- 🎨 **Themes** - Share your Waybar styling configs
 
 #### Development Workflow
 
@@ -264,18 +213,10 @@ Contributions are welcome! Here's how you can help:
 5. Add tests if applicable
 6. Submit a pull request with a clear description
 
-### Roadmap
-
-- [ ] Implement configuration support
-
-### License
-
-This project is licensed under the **GNU General Public License v3.0**. See [LICENSE](./LICENSE) for details.
-
 ### Acknowledgments
 
 - **Zig Team** - For creating an amazing systems programming language
-- **Waybar Contributors** - For the excellent status bar that makes this possible  
+- **Waybar Contributors** - For the excellent status bar that makes this possible
 - **Community** - For feedback, bug reports, and contributions
 
 ---
@@ -285,5 +226,7 @@ This project is licensed under the **GNU General Public License v3.0**. See [LIC
 **Made with ❤️ by Me**
 
 *Star ⭐ this repo if you find it useful!*
+
+This project is licensed under the **GNU General Public License v3.0**. See [LICENSE](./LICENSE) for details.
 
 </div>
