@@ -12,7 +12,7 @@ body:
     attributes:
       label: Environment
       description: e.g. OS, Waybar version, Zig version
-      placeholder: "macOS 12.3, Waybar v3.5, Zig 0.11.0-dev"
+      placeholder: "Arch Linux, Waybar 0.14.0, Zig 0.14.0"
     validations:
       required: true
   - type: textarea
