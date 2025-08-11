@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Report a bug or unexpected behavior
-title: "[Bug] ⌘ "
-labels: ["bug", "needs-triage"]
+title: "[Bug] "
+labels: ["Bug", "Needs Triage"]
 body:
   - type: markdown
     attributes:

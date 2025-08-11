@@ -1,7 +1,7 @@
 name: ❓ General / Question
 description: Ask a question or request clarification
-title: "[Question] ⌘ "
-labels: ["question"]
+title: "[Question] "
+labels: ["Question"]
 body:
   - type: markdown
     attributes:

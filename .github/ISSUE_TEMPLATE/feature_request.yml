@@ -1,7 +1,7 @@
 name: ⭐ Feature Request
 description: Suggest a new feature or improvement
-title: "[Feature] ⌘ "
-labels: ["enhancement", "needs-discussion"]
+title: "[Feature] "
+labels: ["Enhancement", "Feature Request"]
 body:
   - type: markdown
     attributes:
