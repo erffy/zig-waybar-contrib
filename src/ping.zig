@@ -198,7 +198,7 @@ pub fn main() !void {
     var data = Data{
         .TARGET_DOMAIN = try allocator.dupeZ(u8, "google.com"),
         .TARGET_IP = "",
-        .TARGET_PORT = try allocator.dupeZ(u8, "80"),
+        .TARGET_PORT = 80,
         .TARGET_UPDATE_MS = 30,
         .TIMEOUT_MS = 10000,
     };
@@ -211,11 +211,6 @@ pub fn main() !void {
         if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
             const target_domain_str = target_domain_value.string;
             if (target_domain_str.len >= 4) data.TARGET_DOMAIN = try allocator.dupeZ(u8, target_domain_str);
-        }
-
-        if (config_obj.get("TARGET_PORT")) |target_port_value| {
-            const target_port_str = target_port_value.string;
-            data.TARGET_PORT = try allocator.dupeZ(u8, target_port_str);
         }
 
         if (config_obj.get("TARGET_UPDATE_MS")) |target_update_ms_value| {
