@@ -31,6 +31,7 @@ const Thread = std.Thread;
 
 const utils = @import("utils");
 const waybar = utils.waybar;
+const config = utils.config.readConfig;
 
 const PingError = error{
     Timeout,
@@ -207,6 +208,8 @@ fn quality(latency: i64) []const u8 {
 
 pub fn main() !void {
     const stdout = io.getStdOut().writer();
+
+
 
     _ = try Thread.spawn(.{}, updateIP, .{});
 
