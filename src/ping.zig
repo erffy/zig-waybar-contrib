@@ -120,9 +120,7 @@ noinline fn ping(data: Data, buffer: []u8, ip_address: []const u8) !i64 {
 
 pub fn resolveIP(allocator: Allocator, domain: []const u8, port: []const u8) !?[]const u8 {
     const domain_cstr = try allocator.dupeZ(u8, domain);
-    defer allocator.free(domain_cstr);
     const port_cstr = try allocator.dupeZ(u8, port);
-    defer allocator.free(port_cstr);
 
     const hints = c.addrinfo{
         .family = posix.AF.UNSPEC,
@@ -162,8 +160,6 @@ fn updateIP(data: *Data, allocator: Allocator) !void {
         if (try resolveIP(allocator, data.TARGET_DOMAIN, data.TARGET_PORT)) |ip| {
             data.TARGET_IP = ip;
             target_last_update_ms = time.milliTimestamp();
-
-            allocator.free(ip);
         }
 
         Thread.sleep(@intCast(data.TARGET_UPDATE_MS * time.ns_per_s));
@@ -203,36 +199,30 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const config = try readConfig(allocator, "ping.json");
-    defer config.deinit();
+    const configData = try readConfig(allocator, "ping.json");
+    if (configData) |config| {
+        defer config.deinit();
 
-    const config_obj = config.value.object;
-    if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
-        const target_domain_str = target_domain_value.string;
-        if (target_domain_str.len >= 4) data.TARGET_DOMAIN = target_domain_str;
+        const config_obj = config.value.object;
+        if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
+            const target_domain_str = target_domain_value.string;
+            if (target_domain_str.len >= 4) data.TARGET_DOMAIN = target_domain_str;
+        }
 
-        allocator.free(target_domain_value);
-    }
+        if (config_obj.get("TARGET_PORT")) |target_port_value| {
+            const target_port_str = target_port_value.string;
+            data.TARGET_PORT = target_port_str;
+        }
 
-    if (config_obj.get("TARGET_PORT")) |target_port_value| {
-        const target_port_str = target_port_value.string;
-        data.TARGET_PORT = target_port_str;
+        if (config_obj.get("TARGET_UPDATE_MS")) |target_update_ms_value| {
+            const target_update_ms_str = target_update_ms_value.integer;
+            if (target_update_ms_str >= 15) data.TARGET_UPDATE_MS = target_update_ms_str;
+        }
 
-        allocator.free(target_port_value);
-    }
-
-    if (config_obj.get("TARGET_UPDATE_MS")) |target_update_ms_value| {
-        const target_update_ms_str = target_update_ms_value.integer;
-        if (target_update_ms_str >= 15) data.TARGET_UPDATE_MS = target_update_ms_str;
-
-        allocator.free(target_update_ms_value);
-    }
-
-    if (config_obj.get("TIMEOUT_MS")) |target_timeout_ms_value| {
-        const target_timeout_ms_str = target_timeout_ms_value.integer;
-        if (target_timeout_ms_str > 3000) data.TIMEOUT_MS = target_timeout_ms_str;
-
-        allocator.free(target_timeout_ms_value);
+        if (config_obj.get("TIMEOUT_MS")) |target_timeout_ms_value| {
+            const target_timeout_ms_str = target_timeout_ms_value.integer;
+            if (target_timeout_ms_str > 3000) data.TIMEOUT_MS = target_timeout_ms_str;
+        }
     }
 
     _ = try Thread.spawn(.{}, updateIP, .{ &data, allocator });

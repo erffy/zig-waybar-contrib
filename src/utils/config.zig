@@ -25,22 +25,18 @@ const json = std.json;
 const mem = std.mem;
 const Allocator = mem.Allocator;
 
-pub fn readConfig(allocator: Allocator, config_name: []const u8) !json.Parsed(json.Value) {
+pub fn readConfig(allocator: Allocator, config_name: []const u8) !?json.Parsed(json.Value) {
     const home_dir = try process.getEnvVarOwned(allocator, "HOME");
-    defer allocator.free(home_dir);
-
     const config_path = try fs.path.join(allocator, &.{ home_dir, ".config", "zwc", config_name });
-    defer allocator.free(config_path);
 
-    var file = fs.openFileAbsolute(config_path, .{ .mode = .read_only }) catch |err| switch (err) {
-        error.FileNotFound => return error.FileNotFound,
-        else => return err,
+    var file = fs.openFileAbsolute(config_path, .{ .mode = .read_only }) catch |err| {
+        if (err == error.FileNotFound) return null;
+        return err;
     };
     defer file.close();
 
     const file_size = try file.getEndPos();
     const buffer = try allocator.alloc(u8, file_size);
-    defer allocator.free(buffer);
     _ = try file.readAll(buffer);
 
     return try json.parseFromSlice(json.Value, allocator, buffer, .{});
