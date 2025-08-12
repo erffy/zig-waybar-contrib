@@ -17,7 +17,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 const std = @import("std");
 const net = std.net;
 const mem = std.mem;
@@ -28,10 +27,11 @@ const heap = std.heap;
 const c = std.c;
 const fmt = std.fmt;
 const Thread = std.Thread;
+const Allocator = mem.Allocator;
 
 const utils = @import("utils");
 const waybar = utils.waybar;
-const config = utils.config.readConfig;
+const readConfig = utils.config.readConfig;
 
 const PingError = error{
     Timeout,
@@ -39,11 +39,11 @@ const PingError = error{
 };
 
 var TARGET_IP: []const u8 = undefined;
-const TARGET_DOMAIN = "google.com";
-const TARGET_PORT = "80";
-const TARGET_UPDATE_MS: i64 = 30;
-const PACKET_SIZE = 64;
-const TIMEOUT_MS: i64 = 10000;
+var TARGET_DOMAIN: []const u8 = "google.com";
+var TARGET_PORT: []const u8 = "80";
+var TARGET_UPDATE_MS: i64 = 30;
+var PACKET_SIZE: i64 = 64;
+var TIMEOUT_MS: i64 = 10000;
 var target_last_update_ms: i64 = 0;
 
 const PingResult = struct {
@@ -171,17 +171,13 @@ pub fn resolveIP(allocator: mem.Allocator, domain: []const u8, port: []const u8)
     return null;
 }
 
-fn updateIP() !void {
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
-    defer arena.deinit();
-
+fn updateIP(allocator: Allocator) !void {
     while (true) {
-        arena.deinit();
-        arena = heap.ArenaAllocator.init(heap.page_allocator);
-
-        if (try resolveIP(arena.allocator(), TARGET_DOMAIN, TARGET_PORT)) |ip| {
+        if (try resolveIP(allocator, TARGET_DOMAIN, TARGET_PORT)) |ip| {
             TARGET_IP = ip;
             target_last_update_ms = time.milliTimestamp();
+
+            allocator.free(ip);
         }
 
         Thread.sleep(TARGET_UPDATE_MS * time.ns_per_s);
@@ -209,9 +205,51 @@ fn quality(latency: i64) []const u8 {
 pub fn main() !void {
     const stdout = io.getStdOut().writer();
 
+    var gpa = heap.GeneralPurposeAllocator(.{}){};
+    defer gpa.deinit();
 
+    const allocator = &gpa.allocator();
 
-    _ = try Thread.spawn(.{}, updateIP, .{});
+    const config = try readConfig(allocator, "ping.json");
+    defer config.deinit();
+
+    const config_obj = config.value.object;
+    if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
+        const target_domain_str = target_domain_value.string;
+        if (target_domain_str.len >= 4) TARGET_DOMAIN = target_domain_str;
+
+        allocator.free(target_domain_value);
+    }
+
+    if (config_obj.get("TARGET_PORT")) |target_port_value| {
+        const target_port_str = target_port_value.integer;
+        TARGET_PORT = target_port_str;
+
+        allocator.free(target_port_value);
+    }
+
+    if (config_obj.get("TARGET_UPDATE_MS")) |target_update_ms_value| {
+        const target_update_ms_str = target_update_ms_value.integer;
+        if (target_update_ms_str >= 15) TARGET_UPDATE_MS = target_update_ms_str;
+
+        allocator.free(target_update_ms_value);
+    }
+
+    if (config_obj.get("PACKET_SIZE")) |target_packet_size_value| {
+        const target_packet_size_str = target_packet_size_value.integer;
+        if (target_packet_size_str > 0) PACKET_SIZE = target_packet_size_str;
+
+        allocator.free(target_packet_size_value);
+    }
+
+    if (config_obj.get("TIMEOUT_MS")) |target_timeout_ms_value| {
+        const target_timeout_ms_str = target_timeout_ms_value.integer;
+        if (target_timeout_ms_str > 3000) TIMEOUT_MS = target_timeout_ms_str;
+
+        allocator.free(target_timeout_ms_value);
+    }
+
+    _ = try Thread.spawn(.{}, updateIP, .{allocator});
 
     while (true) {
         if (TARGET_IP.len == 0) {
