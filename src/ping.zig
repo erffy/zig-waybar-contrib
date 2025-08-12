@@ -17,7 +17,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 const std = @import("std");
 const net = std.net;
 const mem = std.mem;
@@ -28,36 +27,41 @@ const heap = std.heap;
 const c = std.c;
 const fmt = std.fmt;
 const Thread = std.Thread;
+const Allocator = mem.Allocator;
 
 const utils = @import("utils");
 const waybar = utils.waybar;
+const readConfig = utils.config.readConfig;
 
 const PingError = error{
     Timeout,
     NetworkError,
 };
 
-var TARGET_IP: []const u8 = undefined;
-const TARGET_DOMAIN = "google.com";
-const TARGET_PORT = "80";
-const TARGET_UPDATE_MS: i64 = 30;
-const PACKET_SIZE = 64;
-const TIMEOUT_MS: i64 = 10000;
+const BUFFER_SIZE = 64;
 var target_last_update_ms: i64 = 0;
+
+const Data = struct {
+    TARGET_DOMAIN: []const u8,
+    TARGET_IP: []const u8,
+    TARGET_PORT: []const u8,
+    TARGET_UPDATE_MS: i64,
+    TIMEOUT_MS: i64,
+};
 
 const PingResult = struct {
     icon: []const u8 = "",
-    target: []const u8,
     latency: i64,
     quality: []const u8,
+    data: Data,
 
     pub inline fn format(self: PingResult, writer: anytype) !void {
         const now = time.milliTimestamp();
-        const next_update_sec = @max(0, TARGET_UPDATE_MS - (@divTrunc(now - target_last_update_ms, 1000)));
+        const next_update_sec = @max(0, self.data.TARGET_UPDATE_MS - (@divTrunc(now - target_last_update_ms, 1000)));
 
         try writer.print(
             "{{\"text\":\"  {d}ms\", \"tooltip\":\"Quality · {s}\\nDomain · {s}\\nDomain IP · {s}\\nDomain IP Update · {d}s\"}}",
-            .{ self.latency, self.quality, TARGET_DOMAIN, self.target, next_update_sec },
+            .{ self.latency, self.quality, self.data.TARGET_DOMAIN, self.data.TARGET_IP, next_update_sec },
         );
     }
 };
@@ -87,18 +91,18 @@ inline fn createIcmpPacket(buffer: []u8) void {
     buffer[3] = @as(u8, @truncate(cs & 0xFF));
 }
 
-noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
+noinline fn ping(buffer: []u8, data: Data) !i64 {
     const socket = try posix.socket(posix.AF.INET, posix.SOCK.DGRAM, posix.IPPROTO.ICMP);
     defer posix.close(socket);
 
     const timeout = posix.timeval{
-        .sec = @intCast(TIMEOUT_MS / 1000),
-        .usec = @intCast((TIMEOUT_MS % 1000) * 1000),
+        .sec = @intCast(@divExact(data.TIMEOUT_MS, 1000)),
+        .usec = @intCast((@mod(data.TIMEOUT_MS, 1000)) * 1000),
     };
 
     try posix.setsockopt(socket, posix.SOL.SOCKET, posix.SO.RCVTIMEO, mem.asBytes(&timeout));
 
-    const addr = try net.Address.parseIp4(ip_address, 0);
+    const addr = try net.Address.parseIp4(data.TARGET_IP, 0);
 
     const start_time = time.milliTimestamp();
 
@@ -114,11 +118,9 @@ noinline fn ping(buffer: []u8, ip_address: []const u8) !i64 {
     return latency;
 }
 
-pub fn resolveIP(allocator: mem.Allocator, domain: []const u8, port: []const u8) !?[]const u8 {
+pub fn resolveIP(allocator: Allocator, domain: []const u8, port: []const u8) !?[]const u8 {
     const domain_cstr = try allocator.dupeZ(u8, domain);
-    defer allocator.free(domain_cstr);
     const port_cstr = try allocator.dupeZ(u8, port);
-    defer allocator.free(port_cstr);
 
     const hints = c.addrinfo{
         .family = posix.AF.UNSPEC,
@@ -142,48 +144,29 @@ pub fn resolveIP(allocator: mem.Allocator, domain: []const u8, port: []const u8)
         switch (sockaddr.family) {
             posix.AF.INET => {
                 const ipv4_sockaddr = @as(*const posix.sockaddr.in, @ptrCast(@alignCast(node.addr)));
-
                 const addr_bytes = mem.asBytes(&ipv4_sockaddr.addr);
                 return try fmt.allocPrint(allocator, "{}.{}.{}.{}", .{ addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3] });
             },
-            //posix.AF.INET6 => {
-            //    const ipv6_sockaddr = @as(*const posix.sockaddr.in6, @ptrCast(@alignCast(node.addr)));
-            //    const addr_bytes = mem.asBytes(&ipv6_sockaddr.addr);
-            //    var ip_buffer: [39]u8 = undefined;
-            //     var ip_len: usize = 0;
-            //    for (0..16) |i| {
-            //        if (i > 0 and i % 2 == 0) {
-            //             ip_buffer[ip_len] = ':';
-            //            ip_len += 1;
-            //        }
-            //        const hex_chars = fmt.bufPrint(ip_buffer[ip_len..], "{x:0>2}", .{addr_bytes[i]}) catch unreachable;
-            //        ip_len += hex_chars.len;
-            //    }
-            //    return try allocator.dupe(u8, ip_buffer[0..ip_len]);
-            //},
-            else => {
-                return null;
-            },
+            else => return null,
         }
     }
 
     return null;
 }
 
-fn updateIP() !void {
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
-    defer arena.deinit();
+const UpdateIPArguments = struct {
+    allocator: Allocator,
+    data: *Data,
+};
 
+fn updateIP(args: UpdateIPArguments) !void {
     while (true) {
-        arena.deinit();
-        arena = heap.ArenaAllocator.init(heap.page_allocator);
-
-        if (try resolveIP(arena.allocator(), TARGET_DOMAIN, TARGET_PORT)) |ip| {
-            TARGET_IP = ip;
+        if (try resolveIP(args.allocator, args.data.TARGET_DOMAIN, args.data.TARGET_PORT)) |ip| {
+            args.data.TARGET_IP = ip;
             target_last_update_ms = time.milliTimestamp();
         }
 
-        Thread.sleep(TARGET_UPDATE_MS * time.ns_per_s);
+        Thread.sleep(@intCast(args.data.TARGET_UPDATE_MS * time.ns_per_s));
     }
 }
 
@@ -208,25 +191,58 @@ fn quality(latency: i64) []const u8 {
 pub fn main() !void {
     const stdout = io.getStdOut().writer();
 
-    _ = try Thread.spawn(.{}, updateIP, .{});
+    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var data = Data{
+        .TARGET_DOMAIN = try allocator.dupeZ(u8, "google.com"),
+        .TARGET_IP = "",
+        .TARGET_PORT = 80,
+        .TARGET_UPDATE_MS = 30,
+        .TIMEOUT_MS = 10000,
+    };
+
+    const configData = try readConfig(allocator, "ping.json");
+    if (configData) |config| {
+        defer config.deinit();
+
+        const config_obj = config.value.object;
+        if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
+            const target_domain_str = target_domain_value.string;
+            if (target_domain_str.len >= 4) data.TARGET_DOMAIN = try allocator.dupeZ(u8, target_domain_str);
+        }
+
+        if (config_obj.get("TARGET_UPDATE_MS")) |target_update_ms_value| {
+            const target_update_ms_int = target_update_ms_value.integer;
+            if (target_update_ms_int > 0) data.TARGET_UPDATE_MS = target_update_ms_int;
+        }
+
+        if (config_obj.get("TIMEOUT_MS")) |target_timeout_ms_value| {
+            const target_timeout_ms_int = target_timeout_ms_value.integer;
+            if (target_timeout_ms_int > 0) data.TIMEOUT_MS = target_timeout_ms_int;
+        }
+    }
+
+    _ = try Thread.spawn(.{}, updateIP, .{UpdateIPArguments{ .allocator = allocator, .data = &data }});
 
     while (true) {
-        if (TARGET_IP.len == 0) {
+        if (data.TARGET_IP.len == 0) {
             Thread.sleep(100 * time.ns_per_ms);
             continue;
         }
 
-        var buffer: [PACKET_SIZE]u8 = undefined;
+        var buffer: [BUFFER_SIZE]u8 = undefined;
         createIcmpPacket(&buffer);
 
-        const latency = ping(&buffer, TARGET_IP) catch |err| switch (err) {
+        const latency = ping(&buffer, data) catch |err| switch (err) {
             PingError.Timeout => -1,
             PingError.NetworkError => -2,
             else => -3,
         };
 
         const result = PingResult{
-            .target = TARGET_IP,
+            .data = data,
             .latency = latency,
             .quality = quality(latency),
         };
