@@ -61,10 +61,10 @@ const MemoryInfo = struct {
         const pct: f64 = if (denom == 0) 0 else @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(denom)) * 100.0;
 
         try w.print(
-            "{{\"text\":\"  {d:.2} · {d:.0}%\",\"tooltip\":\"Total · {d:.2}\\nUsed · {d:.2}\\nFree · {d:.2}\\nAvailable · {d:.2}\\nShared · {d:.2}\\nBuffer / Cache · {d:.2}\\n\\nActive · {d:.2}\\nInactive · {d:.2}\\nAnon Pages · {d:.2}\\nMapped · {d:.2}\\nDirty · {d:.2}\\nWriteback · {d:.2}\\nKernel Stack · {d:.2}\\nPage Tables · {d:.2}\\nSlab · {d:.2}\\n\\nSwap Total · {d:.2}\\nSwap Used · {d:.2}\\nSwap Free · {d:.2}\"}}",
+            "{{\"text\":\"  {d:.0}% · {d:.2}\",\"tooltip\":\"Total · {d:.2}\\nUsed · {d:.2}\\nFree · {d:.2}\\nAvailable · {d:.2}\\nShared · {d:.2}\\nBuffer / Cache · {d:.2}\\n\\nActive · {d:.2}\\nInactive · {d:.2}\\nAnon Pages · {d:.2}\\nMapped · {d:.2}\\nDirty · {d:.2}\\nWriteback · {d:.2}\\nKernel Stack · {d:.2}\\nPage Tables · {d:.2}\\nSlab · {d:.2}\\n\\nSwap Total · {d:.2}\\nSwap Used · {d:.2}\\nSwap Free · {d:.2}\"}}",
             .{
-                formatSize(total_usage),
                 pct,
+                formatSize(total_usage),
                 formatSize(self.mem_total),
                 formatSize(self.mem_used),
                 formatSize(self.mem_free),
