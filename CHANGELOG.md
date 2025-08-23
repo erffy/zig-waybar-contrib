@@ -2,6 +2,17 @@
 
 ## v1.x
 
+### v1.1.4
+
+#### module: ping
+
+- Swap the positions of the total percentage and total text.
+- Fix TARGET_PORT type mismatch in ping module
+
+#### module: updates
+
+- Make `CHECK_INTERVAL` configurable `(~/.config/zwc/updates.json)`
+
 ### v1.1.3
 
 #### module: memory, updates, ping
