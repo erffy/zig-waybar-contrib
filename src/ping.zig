@@ -198,7 +198,7 @@ pub fn main() !void {
     var data = Data{
         .TARGET_DOMAIN = try allocator.dupeZ(u8, "google.com"),
         .TARGET_IP = "",
-        .TARGET_PORT = 80,
+        .TARGET_PORT = try allocator.dupeZ(u8, "80"),
         .TARGET_UPDATE_MS = 30,
         .TIMEOUT_MS = 10000,
     };
