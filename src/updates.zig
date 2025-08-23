@@ -34,7 +34,7 @@ const Thread = std.Thread;
 
 const utils = @import("utils");
 const waybar = utils.waybar;
-
+const readConfig = utils.config.readConfig;
 const resolveIp = @import("ping.zig").resolveIP;
 
 const BUFFER_SIZE = 4096;
@@ -208,6 +208,19 @@ pub fn main() !void {
 
     var err_buf: [512]u8 = undefined;
 
+    var CHECK_INTERVAL = try allocator.dupeZ(u64, &.{160});
+
+    const configData = try readConfig(allocator, "updates.json");
+    if (configData) |config| {
+        defer config.deinit();
+
+        const config_obj = config.value.object;
+        if (config_obj.get("CHECK_INTERVAL")) |check_interval_value| {
+            const check_interval_int = check_interval_value.integer;
+            if (check_interval_int >= 60) CHECK_INTERVAL = try allocator.dupeZ(u64, &.{@intCast(check_interval_int)});
+        }
+    }
+
     while (true) {
         while (try resolveIp(allocator, "google.com", "80") == null) {
             Thread.sleep(500 * time.ns_per_ms);
@@ -267,6 +280,6 @@ pub fn main() !void {
         try stdout.writeByte('\n');
         try waybar.signal(10);
 
-        Thread.sleep(160 * time.ns_per_s);
+        Thread.sleep(CHECK_INTERVAL[0] * time.ns_per_s);
     }
 }
