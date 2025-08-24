@@ -12,6 +12,7 @@
 #### module: updates
 
 - Make `CHECK_INTERVAL` configurable `(~/.config/zwc/updates.json)`
+- Fix `CHECK_INTERVAL` is `0` that caused by alloc (08/24/2025)
 
 ### v1.1.3
 
