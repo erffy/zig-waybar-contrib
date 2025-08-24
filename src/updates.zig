@@ -208,7 +208,7 @@ pub fn main() !void {
 
     var err_buf: [512]u8 = undefined;
 
-    var CHECK_INTERVAL = try allocator.dupeZ(u64, &.{160});
+    var CHECK_INTERVAL: u64 = 160;
 
     const configData = try readConfig(allocator, "updates.json");
     if (configData) |config| {
@@ -217,7 +217,7 @@ pub fn main() !void {
         const config_obj = config.value.object;
         if (config_obj.get("CHECK_INTERVAL")) |check_interval_value| {
             const check_interval_int = check_interval_value.integer;
-            if (check_interval_int >= 60) CHECK_INTERVAL = try allocator.dupeZ(u64, &.{@intCast(check_interval_int)});
+            if (check_interval_int >= 60) CHECK_INTERVAL = @intCast(check_interval_int);
         }
     }
 
@@ -280,6 +280,6 @@ pub fn main() !void {
         try stdout.writeByte('\n');
         try waybar.signal(10);
 
-        Thread.sleep(CHECK_INTERVAL[0] * time.ns_per_s);
+        Thread.sleep(CHECK_INTERVAL * time.ns_per_s);
     }
 }
