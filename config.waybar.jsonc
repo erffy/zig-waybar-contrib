@@ -1,0 +1,27 @@
+{
+  "custom/updates#zwc": {
+    "exec": "waybar-module-updates",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 10,
+    "escape": true
+  },
+  "custom/gpu#zwc": {
+    "exec": "waybar-module-gpu",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 11
+  },
+  "custom/memory#zwc": {
+    "exec": "waybar-module-memory",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 12
+  },
+  "custom/ping#zwc": {
+    "exec": "waybar-module-ping",
+    "return-type": "json",
+    "interval": 0,
+    "signal": 13
+  }
+}

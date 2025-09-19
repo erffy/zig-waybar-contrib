@@ -1,0 +1,11 @@
+.{
+    .fingerprint = 0xf0b38d05f8063604,
+    .name = .zig_waybar_contrib,
+    .version = "1.2.0",
+    .minimum_zig_version = "0.15.1",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src"
+    }
+}

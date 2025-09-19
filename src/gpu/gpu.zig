@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: GPL-3.0-only
+//
+// This file is part of zig-waybar-contrib.
+//
+// Copyright (c) 2025 erffy
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+const std = @import("std");
+const io = std.io;
+const time = std.time;
+const fs = std.fs;
+const Thread = std.Thread;
+
+const utils = @import("utils");
+const waybar = utils.waybar;
+
+const bo = @import("build_options");
+
+pub fn main() !void {
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+
+    const SMI = blk: {
+        if (bo.has_amdsmi) {
+            break :blk @import("backend/amdsmi.zig");
+        } else if (bo.has_rocm) {
+            break :blk @import("backend/rocmsmi.zig");
+        } else if (bo.has_nvml) {
+            break :blk @import("backend/nvml.zig");
+        } else {
+            @compileError("No supported GPU backend found.");
+        }
+    };
+
+    const handle = try SMI.initialize();
+    defer SMI.shutdown();
+
+    while (true) {
+        const gpu_info: SMI.GPUInfo = try SMI.getGPUInfo(handle);
+
+        try gpu_info.json(stdout);
+        try stdout.writeByte('\n');
+        try waybar.signal(11);
+
+        try stdout.flush();
+
+        Thread.sleep(1 * time.ns_per_s);
+    }
+}
