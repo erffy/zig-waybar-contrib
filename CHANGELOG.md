@@ -1,5 +1,16 @@
 # Changelog
 
+### master
+
+- utils(waybar): replace deprecated `trimRight` function with `trimEnd`
+- utils(waybar): replace deprecated `readAll` function with new one
+- refactor(ping): remove `TARGET_UPDATE_MS` from config and set to `60`s
+- docs: update readme
+- docs: update changelog
+- ping: remove domain ip update info
+- memory: replace deprecated `readAll` function with new one
+- updates: update imports for clarity
+
 ## v1.x
 
 ### v1.2.0
