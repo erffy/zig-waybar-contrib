@@ -40,7 +40,6 @@ const PingError = error{
 };
 
 const BUFFER_SIZE = 64;
-var target_last_update_ms: i64 = 0;
 
 const Data = struct {
     TARGET_DOMAIN: []const u8,
@@ -195,7 +194,7 @@ pub fn main() !void {
         .TARGET_DOMAIN = try allocator.dupeZ(u8, "google.com"),
         .TARGET_IP = "",
         .TARGET_PORT = try allocator.dupeZ(u8, "80"),
-        .TARGET_UPDATE_MS = 30,
+        .TARGET_UPDATE_MS = 60,
         .TIMEOUT_MS = 10000,
     };
 
@@ -207,11 +206,6 @@ pub fn main() !void {
         if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
             const target_domain_str = target_domain_value.string;
             if (target_domain_str.len >= 4) data.TARGET_DOMAIN = try allocator.dupeZ(u8, target_domain_str);
-        }
-
-        if (config_obj.get("TARGET_UPDATE_MS")) |target_update_ms_value| {
-            const target_update_ms_int = target_update_ms_value.integer;
-            if (target_update_ms_int > 0) data.TARGET_UPDATE_MS = target_update_ms_int;
         }
 
         if (config_obj.get("TIMEOUT_MS")) |target_timeout_ms_value| {
