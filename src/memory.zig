@@ -145,7 +145,7 @@ fn parse(buf: []const u8) !MemoryInfo {
         if (key_map.get(key)) |which| {
             var v = parseValueU64(rest) catch continue;
             v *= 1024;
-            
+
             switch (which) {
                 .MemTotal => info.mem_total = v,
                 .MemFree => info.mem_free = v,
@@ -195,7 +195,8 @@ pub fn main() !void {
 
     while (true) {
         var f = try fs.openFileAbsolute("/proc/meminfo", .{ .mode = .read_only });
-        const n = try f.readAll(&buf);
+        var f_reader = f.reader(&.{});
+        const n = try f_reader.interface.readSliceShort(&buf);
         f.close();
 
         const mem_info = try parse(buf[0..n]);

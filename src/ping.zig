@@ -57,12 +57,9 @@ const PingResult = struct {
     data: Data,
 
     pub inline fn format(this: @This(), writer: *io.Writer) !void {
-        const now = time.milliTimestamp();
-        const next_update_sec = @max(0, this.data.TARGET_UPDATE_MS - (@divTrunc(now - target_last_update_ms, 1000)));
-
         try writer.print(
-            "{{\"text\":\"  {d}ms\", \"tooltip\":\"Quality · {s}\\nDomain · {s}\\nDomain IP · {s}\\nDomain IP Update · {d}s\"}}",
-            .{ this.latency, this.quality, this.data.TARGET_DOMAIN, this.data.TARGET_IP, next_update_sec },
+            "{{\"text\":\"  {d}ms\", \"tooltip\":\"Quality · {s}\\nDomain · {s}\\nDomain IP · {s}\"}}",
+            .{ this.latency, this.quality, this.data.TARGET_DOMAIN, this.data.TARGET_IP },
         );
     }
 };
@@ -162,11 +159,7 @@ const UpdateIPArguments = struct {
 
 fn updateIP(args: UpdateIPArguments) !void {
     while (true) {
-        if (try resolveIP(args.allocator, args.data.TARGET_DOMAIN, args.data.TARGET_PORT)) |ip| {
-            args.data.TARGET_IP = ip;
-            target_last_update_ms = time.milliTimestamp();
-        }
-
+        if (try resolveIP(args.allocator, args.data.TARGET_DOMAIN, args.data.TARGET_PORT)) |ip| args.data.TARGET_IP = ip;
         Thread.sleep(@intCast(args.data.TARGET_UPDATE_MS * time.ns_per_s));
     }
 }

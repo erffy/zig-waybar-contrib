@@ -33,9 +33,11 @@ const ArrayList = std.ArrayList;
 const Thread = std.Thread;
 
 const utils = @import("utils");
+const ping = @import("ping.zig");
 const waybar = utils.waybar;
-const readConfig = utils.config.readConfig;
-const resolveIp = @import("ping.zig").resolveIP;
+const config = utils.config;
+const readConfig = config.readConfig;
+const resolveIp = ping.resolveIP;
 
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
@@ -156,7 +158,7 @@ noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
     return updates;
 }
 
-fn readAll(file: std.fs.File, gpa: std.mem.Allocator) ![]u8 {
+fn readAll(file: fs.File, gpa: mem.Allocator) ![]u8 {
     var buffer: [1024]u8 = undefined;
     var freader = file.reader(&buffer);
     const reader = &freader.interface;
@@ -220,10 +222,10 @@ pub fn main() !void {
     var CHECK_INTERVAL: u64 = 160;
 
     const configData = try readConfig(allocator, "updates.json");
-    if (configData) |config| {
-        defer config.deinit();
+    if (configData) |cfg| {
+        defer cfg.deinit();
 
-        const config_obj = config.value.object;
+        const config_obj = cfg.value.object;
         if (config_obj.get("CHECK_INTERVAL")) |check_interval_value| {
             const check_interval_int = check_interval_value.integer;
             if (check_interval_int >= 60) CHECK_INTERVAL = @intCast(check_interval_int);

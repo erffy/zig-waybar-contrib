@@ -113,7 +113,7 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
   // Display these modules on the right side of the Waybar
   "modules-right": [
     "custom/updates#zwc",
-    "custom/gpu#zwc",
+    "custom/gpu#zwc", // use only if you have installed GPU dependency
     "custom/memory#zwc",
     "custom/ping#zwc"
   ]
