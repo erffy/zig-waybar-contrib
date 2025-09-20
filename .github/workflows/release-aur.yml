@@ -1,0 +1,23 @@
+name: AUR Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  aur:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Register local actions
+        uses: actions/checkout@master
+
+      - name: Publish zig-waybar-contrib
+        uses: zokugun/github-actions-aur-releaser@master
+        with:
+          package_name: zig-waybar-contrib
+          aur_private_key: ${{ secrets.AUR_PRIVATE_KEY }}
+          aur_username: ${{ secrets.AUR_USERNAME }}
+          aur_email: ${{ secrets.AUR_EMAIL }}
