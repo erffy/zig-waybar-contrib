@@ -42,7 +42,7 @@ pub fn pid() !?u32 {
         var name_buf: [64]u8 = undefined;
         var file_reader = file.reader(&.{});
         const n = try file_reader.interface.readSliceShort(&name_buf);
-        const proc_name = mem.trimRight(u8, name_buf[0..n], "\n");
+        const proc_name = mem.trimEnd(u8, name_buf[0..n], "\n");
 
         if (mem.eql(u8, proc_name, "waybar")) return try fmt.parseInt(u32, entry.name, 10);
     }
