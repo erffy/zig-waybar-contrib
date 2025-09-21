@@ -88,13 +88,20 @@ yay -S zig-waybar-contrib
 
 ```bash
 # Clone the repository
-git clone https://github.com/erffy/zig-waybar-contrib.git && cd zig-waybar-contrib
+git clone https://github.com/erffy/zig-waybar-contrib.git
+# or clone from AUR
+git clone https://aur.archlinux.org/zig-waybar-contrib.git
+
+# cd to source
+cd zig-waybar-contrib
 
 # Build all modules
-zig build
+zig build -Drelease
 
 # Install to system
-sudo cp -r zig-out/bin/* /usr/local/bin/
+for f in zig-out/bin/*; do
+  sudo cp -r $f /usr/local/bin/waybar-module-$(basename $f)
+done
 ```
 
 ### Configuration
