@@ -100,7 +100,7 @@ zig build -Drelease
 
 # Install to system
 for f in zig-out/bin/*; do
-  sudo cp -r $f /usr/local/bin/waybar-module-$(basename $f)
+  sudo cp -r $f /usr/local/bin/waybar-module-$f
 done
 ```
 
