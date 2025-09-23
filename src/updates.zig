@@ -31,6 +31,7 @@ const time = std.time;
 const fmt = std.fmt;
 const ArrayList = std.ArrayList;
 const Thread = std.Thread;
+const Allocator = mem.Allocator;
 
 const utils = @import("utils");
 const ping = @import("ping.zig");
@@ -119,7 +120,7 @@ inline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
     return true;
 }
 
-noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
+noinline fn checkupdates(allocator: Allocator) ![]u8 {
     const tmp_base = posix.getenv("TMPDIR") orelse "/var/tmp";
     const uid = posix.getenv("EUID") orelse "1000";
 
@@ -158,14 +159,14 @@ noinline fn checkupdates(allocator: mem.Allocator) ![]u8 {
     return updates;
 }
 
-fn readAll(file: fs.File, gpa: mem.Allocator) ![]u8 {
+fn readAll(file: fs.File, gpa: Allocator) ![]u8 {
     var buffer: [1024]u8 = undefined;
     var freader = file.reader(&buffer);
     const reader = &freader.interface;
     return reader.allocRemaining(gpa, .unlimited);
 }
 
-noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
+noinline fn getUpdates(allocator: Allocator, db_path: []const u8) ![]u8 {
     var child = process.Child.init(&[_][]const u8{ "pacman", "-Qu", "--dbpath", db_path }, allocator);
 
     child.stdout_behavior = .Pipe;
@@ -175,11 +176,9 @@ noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
 
     const stdout = try readAll(child.stdout.?, allocator);
     const stderr = try readAll(child.stderr.?, allocator);
-    defer allocator.free(stderr);
-    defer allocator.free(stdout);
 
     const term = try child.wait();
-    if (term != .Exited or term.Exited != 0 or stderr.len > 0) allocator.free(stdout);
+    if (term != .Exited or term.Exited != 0 or stderr.len > 0) allocator.destroy(&stdout);
 
     var lines = ArrayList(u8).empty;
     var iter = mem.splitAny(u8, stdout, "\n");
@@ -194,7 +193,7 @@ noinline fn getUpdates(allocator: mem.Allocator, db_path: []const u8) ![]u8 {
     return lines.toOwnedSlice(allocator);
 }
 
-inline fn runCommand(allocator: mem.Allocator, argv: []const []const u8) !u8 {
+inline fn runCommand(allocator: Allocator, argv: []const []const u8) !u8 {
     var child = process.Child.init(argv, allocator);
     child.stderr_behavior = .Ignore;
     child.stdout_behavior = .Ignore;
