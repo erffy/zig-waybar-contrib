@@ -2,6 +2,7 @@
 
 ### master
 
+- refactor(updates): improve readability and cleanup handling in `checkupdates()` function
 - refactor(updates): improve readability and memory handling
 - feat(memory): add `SwapCached` info
 - utils(waybar): replace deprecated `trimRight()` function with `trimEnd()`

@@ -121,40 +121,33 @@ inline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
 }
 
 noinline fn checkupdates(allocator: Allocator) ![]u8 {
-    const tmp_base = posix.getenv("TMPDIR") orelse "/var/tmp";
-    const uid = posix.getenv("EUID") orelse "1000";
+    const tmp_base = posix.getenv("TMPDIR") orelse "/tmp";
 
-    var db_path_buffer: [fs.max_path_bytes]u8 = undefined;
-    var tmp_local_buffer: [fs.max_path_bytes]u8 = undefined;
+    const uid = try fmt.allocPrint(allocator, "{}", .{posix.geteuid()});
 
-    const db_path = try fmt.bufPrint(&db_path_buffer, "{s}/checkup-db-{s}", .{ tmp_base, uid });
+    var db_path_buf: [fs.max_path_bytes]u8 = undefined;
+    const db_path = try fmt.bufPrint(&db_path_buf, "{s}/checkup-db-{s}", .{ tmp_base, uid });
 
     _ = fs.openDirAbsolute(db_path, .{}) catch |err| switch (err) {
         error.FileNotFound => try fs.makeDirAbsolute(db_path),
         else => |e| return e,
     };
+
     defer fs.deleteTreeAbsolute(db_path) catch {};
 
-    const local_db = "/var/lib/pacman/local";
-    const tmp_local = try fmt.bufPrint(&tmp_local_buffer, "{s}/local", .{db_path});
+    var tmp_local_buf: [fs.max_path_bytes]u8 = undefined;
+    const tmp_local = try fmt.bufPrint(&tmp_local_buf, "{s}/local", .{db_path});
 
-    fs.symLinkAbsolute(local_db, tmp_local, .{}) catch |err| switch (err) {
+    fs.symLinkAbsolute("/var/lib/pacman/local", tmp_local, .{}) catch |err| switch (err) {
         error.PathAlreadyExists => {},
         else => return err,
     };
 
-    const sync_result = try runCommand(allocator, &[_][]const u8{ "fakeroot", "pacman", "-Sy", "--dbpath", db_path, "--logfile", "/dev/null" });
-
-    if (sync_result != 0) {
-        fs.deleteTreeAbsolute(db_path) catch {};
-        return CheckUpdatesError.CannotFetchUpdates;
-    }
+    const sync_status = try runCommand(allocator, &[_][]const u8{ "fakeroot", "pacman", "-Sy", "--dbpath", db_path, "--logfile", "/dev/null" });
+    if (sync_status != 0) return CheckUpdatesError.CannotFetchUpdates;
 
     const updates = try getUpdates(allocator, db_path);
-    if (updates.len == 0) {
-        fs.deleteTreeAbsolute(db_path) catch {};
-        return &[_]u8{};
-    }
+    if (updates.len == 0) return &[_]u8{};
 
     return updates;
 }
