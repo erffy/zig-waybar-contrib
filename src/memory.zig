@@ -40,6 +40,7 @@ const MemoryInfo = struct {
     swap_total: u64 = 0,
     swap_used: u64 = 0,
     swap_free: u64 = 0,
+    swap_cached: u64 = 0,
 
     active: u64 = 0,
     inactive: u64 = 0,
@@ -57,7 +58,7 @@ const MemoryInfo = struct {
         const pct: f64 = if (denom == 0) 0 else @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(denom)) * 100.0;
 
         try w.print(
-            "{{\"text\":\"  {d:.0}% · {Bi:.2}\",\"tooltip\":\"Total · {Bi:.2}\\nUsed · {Bi:.2}\\nFree · {Bi:.2}\\nAvailable · {Bi:.2}\\nShared · {Bi:.2}\\nBuffer / Cache · {Bi:.2}\\n\\nActive · {Bi:.2}\\nInactive · {Bi:.2}\\nAnon Pages · {Bi:.2}\\nMapped · {Bi:.2}\\nDirty · {Bi:.2}\\nWriteback · {Bi:.2}\\nKernel Stack · {Bi:.2}\\nPage Tables · {Bi:.2}\\nSlab · {Bi:.2}\\n\\nSwap Total · {Bi:.2}\\nSwap Used · {Bi:.2}\\nSwap Free · {Bi:.2}\"}}",
+            "{{\"text\":\"  {d:.0}% · {Bi:.2}\",\"tooltip\":\"Total · {Bi:.2}\\nUsed · {Bi:.2}\\nFree · {Bi:.2}\\nAvailable · {Bi:.2}\\nShared · {Bi:.2}\\nBuffer / Cache · {Bi:.2}\\n\\nActive · {Bi:.2}\\nInactive · {Bi:.2}\\nAnon Pages · {Bi:.2}\\nMapped · {Bi:.2}\\nDirty · {Bi:.2}\\nWriteback · {Bi:.2}\\nKernel Stack · {Bi:.2}\\nPage Tables · {Bi:.2}\\nSlab · {Bi:.2}\\n\\nSwap Total · {Bi:.2}\\nSwap Used · {Bi:.2}\\nSwap Free · {Bi:.2}\\nSwap Cached · {Bi:.2}\"}}",
             .{
                 pct,
                 total_usage,
@@ -79,6 +80,7 @@ const MemoryInfo = struct {
                 self.swap_total,
                 self.swap_used,
                 self.swap_free,
+                self.swap_cached,
             },
         );
     }
@@ -93,6 +95,7 @@ const Key = enum {
     Shmem,
     SwapTotal,
     SwapFree,
+    SwapCached,
     Active,
     Inactive,
     AnonPages,
@@ -113,6 +116,7 @@ const key_map = StaticStringMap(Key).initComptime(.{
     .{ "Shmem", .Shmem },
     .{ "SwapTotal", .SwapTotal },
     .{ "SwapFree", .SwapFree },
+    .{ "SwapCached", .SwapCached },
     .{ "Active", .Active },
     .{ "Inactive", .Inactive },
     .{ "AnonPages", .AnonPages },
@@ -134,6 +138,7 @@ fn parse(buf: []const u8) !MemoryInfo {
     var info = MemoryInfo{};
     var buffers: u64 = 0;
     var cached: u64 = 0;
+    var swap_cached: u64 = 0;
 
     var it = mem.splitScalar(u8, buf, '\n');
     while (it.next()) |line| {
@@ -155,6 +160,7 @@ fn parse(buf: []const u8) !MemoryInfo {
                 .Shmem => info.mem_shared = v,
                 .SwapTotal => info.swap_total = v,
                 .SwapFree => info.swap_free = v,
+                .SwapCached => swap_cached = v,
                 .Active => info.active = v,
                 .Inactive => info.inactive = v,
                 .AnonPages => info.anon_pages = v,
@@ -168,7 +174,8 @@ fn parse(buf: []const u8) !MemoryInfo {
         }
     }
 
-    info.mem_buff_cache = buffers + cached;
+    info.mem_buff_cache = buffers + cached + swap_cached;
+    info.swap_cached = swap_cached;
 
     if (info.mem_available == 0 and info.mem_total != 0) {
         const freeish = info.mem_free + info.mem_buff_cache;

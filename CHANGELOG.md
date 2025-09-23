@@ -2,6 +2,7 @@
 
 ### master
 
+- feat(memory): add `SwapCached` info
 - utils(waybar): replace deprecated `trimRight` function with `trimEnd`
 - utils(waybar): replace deprecated `readAll` function with new one
 - refactor(ping): remove `TARGET_UPDATE_MS` from config and set to `60`s
