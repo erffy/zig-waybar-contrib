@@ -2,6 +2,7 @@
 
 ### master
 
+- refactor(updates): code improvements
 - fix(updates): fix wrong allocator usage in `configData`
 - build: set `OptimizationMode` to `ReleaseSmall`
 - build: set `abi` to `gnu`

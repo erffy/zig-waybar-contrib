@@ -160,7 +160,7 @@ fn readAll(file: fs.File, gpa: Allocator) ![]u8 {
 }
 
 noinline fn getUpdates(allocator: Allocator, db_path: []const u8) ![]u8 {
-    var child = process.Child.init(&[_][]const u8{ "pacman", "-Qu", "--dbpath", db_path }, allocator);
+    var child: process.Child = .init(&[_][]const u8{ "pacman", "-Qu", "--dbpath", db_path }, allocator);
 
     child.stdout_behavior = .Pipe;
     child.stderr_behavior = .Pipe;
@@ -187,7 +187,7 @@ noinline fn getUpdates(allocator: Allocator, db_path: []const u8) ![]u8 {
 }
 
 inline fn runCommand(allocator: Allocator, argv: []const []const u8) !u8 {
-    var child = process.Child.init(argv, allocator);
+    var child: process.Child = .init(argv, allocator);
     child.stderr_behavior = .Ignore;
     child.stdout_behavior = .Ignore;
 
@@ -205,13 +205,13 @@ pub fn main() !void {
     var stdout_writer = fs.File.stdout().writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
 
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    var arena: heap.ArenaAllocator = .init(heap.page_allocator);
     defer arena.deinit();
-    const allocator = arena.allocator();
+    const allocator: Allocator = .allocator();
 
-    var arena_config = heap.ArenaAllocator.init(heap.page_allocator);
+    var arena_config: heap.ArenaAllocator = .init(heap.page_allocator);
     defer arena_config.deinit();
-    const allocator_config = arena_config.allocator();
+    const allocator_config: Allocator = .allocator();
 
     var err_buf: [512]u8 = undefined;
 
@@ -253,8 +253,7 @@ pub fn main() !void {
                 sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
 
                 var output_buffer: [BUFFER_SIZE * MAX_UPDATES]u8 = undefined;
-                var output_stream = fs.File.stdout().writerStreaming(&output_buffer);
-                const writer = &output_stream.interface;
+                var writer: io.Writer = .fixed(&output_buffer);
 
                 for (updates[0..updates_count], 0..) |update, i| {
                     try writer.print("{s:<25} {s:<15} -> {s}\n", .{
@@ -269,12 +268,11 @@ pub fn main() !void {
                     }
                 }
 
-                const written = output_stream.pos;
-                if (written > 0 and output_buffer[written - 1] == '\n')
-                    output_stream.pos -= 1;
+                const written = writer.end;
+                if (written > 0 and output_buffer[written - 1] == '\n') writer.end -= 1;
 
                 var json_buffer: [BUFFER_SIZE * 2]u8 = undefined;
-                escapeJson(output_buffer[0..output_stream.pos], &json_buffer);
+                escapeJson(output_buffer[0..writer.end], &json_buffer);
 
                 try stdout.print("{{\"text\":\"  {d}\",\"tooltip\":\"{s}\"}}", .{ updates_count, mem.sliceTo(&json_buffer, 0) });
             }
