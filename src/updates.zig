@@ -211,7 +211,7 @@ pub fn main() !void {
 
     var arena_config = heap.ArenaAllocator.init(heap.page_allocator);
     defer arena_config.deinit();
-    const allocator_config = arena.allocator();
+    const allocator_config = arena_config.allocator();
 
     var err_buf: [512]u8 = undefined;
 
