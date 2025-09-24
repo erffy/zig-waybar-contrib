@@ -120,7 +120,7 @@ pub fn resolveIP(allocator: Allocator, domain: []const u8, port: []const u8) !?[
     const port_cstr = try allocator.dupeZ(u8, port);
 
     const hints = c.addrinfo{
-        .family = posix.AF.UNSPEC,
+        .family = posix.AF.INET,
         .socktype = posix.SOCK.STREAM,
         .protocol = 0,
         .flags = c.AI{},
@@ -132,23 +132,14 @@ pub fn resolveIP(allocator: Allocator, domain: []const u8, port: []const u8) !?[
 
     var result: ?*c.addrinfo = null;
     _ = c.getaddrinfo(domain_cstr.ptr, port_cstr.ptr, &hints, &result);
-    defer if (result) |res| c.freeaddrinfo(res);
+    defer c.freeaddrinfo(result.?);
 
-    const ai = result;
-    if (ai) |node| {
-        const sockaddr = node.addr.?;
+    const node = result.?;
 
-        switch (sockaddr.family) {
-            posix.AF.INET => {
-                const ipv4_sockaddr = @as(*const posix.sockaddr.in, @ptrCast(@alignCast(node.addr)));
-                const addr_bytes = mem.asBytes(&ipv4_sockaddr.addr);
-                return try fmt.allocPrint(allocator, "{}.{}.{}.{}", .{ addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3] });
-            },
-            else => return null,
-        }
-    }
+    const ipv4 = @as(*const posix.sockaddr.in, @ptrCast(@alignCast(node.addr.?)));
+    const bytes = mem.asBytes(&ipv4.addr);
 
-    return null;
+    return try fmt.allocPrint(allocator, "{}.{}.{}.{}", .{ bytes[0], bytes[1], bytes[2], bytes[3] });
 }
 
 const UpdateIPArguments = struct {
