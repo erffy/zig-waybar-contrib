@@ -95,14 +95,20 @@ git clone https://aur.archlinux.org/zig-waybar-contrib.git
 # cd to source
 cd zig-waybar-contrib
 
-# Build all modules
+# Install to system*
+makepkg --si
+
+# Build all modules**
 zig build -Drelease
 
-# Install to system
+# Install to system**
 for f in zig-out/bin/*; do
   sudo cp -r $f /usr/local/bin/waybar-module-$f
 done
 ```
+
+`*`: Run this command if you cloned from **AUR**
+`**`: Run this command if you cloned from **GitHub**
 
 ### Configuration
 
