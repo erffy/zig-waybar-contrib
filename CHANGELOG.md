@@ -2,6 +2,8 @@
 
 ### master
 
+- fix(updates): fix allocator usage
+- refactor(updates): replace deprecated `fixedBufferStream()` function with new one
 - refactor(ping): improve `resolveIP()` function
 - refactor(updates): improve readability and cleanup handling in `checkupdates()` function
 - refactor(updates): improve readability and memory handling
@@ -11,9 +13,9 @@
 - refactor(ping): remove `TARGET_UPDATE_MS` from config and set to `60`s
 - docs: update readme
 - docs: update changelog
-- ping: remove domain ip update info
-- memory: replace deprecated `readAll()` function with new one
-- updates: update imports for clarity
+- refactor(ping): remove domain ip update info
+- refactor(memory): replace deprecated `readAll()` function with new one
+- refactor(updates): update imports for clarity
 
 ## v1.x
 

@@ -253,8 +253,8 @@ pub fn main() !void {
                 sort.insertion(UpdateInfo, updates[0..updates_count], {}, compareUpdates);
 
                 var output_buffer: [BUFFER_SIZE * MAX_UPDATES]u8 = undefined;
-                var output_stream = io.fixedBufferStream(&output_buffer);
-                const writer = output_stream.writer();
+                var output_stream = fs.File.stdout().writerStreaming(&output_buffer);
+                const writer = &output_stream.interface;
 
                 for (updates[0..updates_count], 0..) |update, i| {
                     try writer.print("{s:<25} {s:<15} -> {s}\n", .{
