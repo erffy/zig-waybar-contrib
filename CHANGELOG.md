@@ -2,6 +2,7 @@
 
 ### master
 
+- fix(updates): fix wrong allocator usage in `configData`
 - build: set `OptimizationMode` to `ReleaseSmall`
 - build: set `abi` to `gnu`
 - build: set `os_tag` to `linux`

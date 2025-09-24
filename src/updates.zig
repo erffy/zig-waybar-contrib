@@ -217,7 +217,7 @@ pub fn main() !void {
 
     var CHECK_INTERVAL: u64 = 160;
 
-    const configData = try readConfig(allocator, "updates.json");
+    const configData = try readConfig(allocator_config, "updates.json");
     if (configData) |cfg| {
         defer cfg.deinit();
 
