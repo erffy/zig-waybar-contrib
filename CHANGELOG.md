@@ -2,6 +2,7 @@
 
 ### master
 
+- fix(updates): fix repeated calls in allocators
 - refactor(updates): code improvements
 - fix(updates): fix wrong allocator usage in `configData`
 - build: set `OptimizationMode` to `ReleaseSmall`
