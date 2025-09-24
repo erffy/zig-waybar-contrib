@@ -44,7 +44,7 @@ fn fileExists(path: []const u8) bool {
 }
 
 pub fn build(b: *Build) void {
-    const target = b.standardTargetOptions(.{ .default_target = .{ .cpu_arch = .x86_64, .os_tag = .linux } });
+    const target = b.standardTargetOptions(.{ .default_target = .{ .cpu_arch = .x86_64, .os_tag = .linux, .abi = .gnu } });
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
     const have_amdsmi = fileExists("/opt/rocm/lib/libamd_smi.so");
