@@ -2,6 +2,7 @@
 
 ### master
 
+- build: set `OptimizationMode` to `ReleaseSmall`
 - build: set `abi` to `gnu`
 - build: set `os_tag` to `linux`
 - build: update deprecated APIs, set target CPU to x86_64
