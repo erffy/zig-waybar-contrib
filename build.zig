@@ -44,7 +44,7 @@ fn fileExists(path: []const u8) bool {
 }
 
 pub fn build(b: *Build) void {
-    const target = b.standardTargetOptions(.{});
+    const target = b.standardTargetOptions(.{ .default_target = .{ .cpu_arch = .x86_64 } });
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
     const have_amdsmi = fileExists("/opt/rocm/lib/libamd_smi.so");
@@ -61,13 +61,13 @@ pub fn build(b: *Build) void {
     }
 
     if (have_amdsmi or have_rocm or have_cuda) {
-       buildExecutable(b, .{
-           .name = "gpu",
-           .source = "src/gpu/gpu.zig",
-           .link_amdsmi = have_amdsmi,
-           .link_rocm = have_rocm,
-           .link_cuda = have_cuda,
-       }, target, optimize, build_options);
+        buildExecutable(b, .{
+            .name = "gpu",
+            .source = "src/gpu/gpu.zig",
+            .link_amdsmi = have_amdsmi,
+            .link_rocm = have_rocm,
+            .link_cuda = have_cuda,
+        }, target, optimize, build_options);
     }
 }
 
@@ -91,21 +91,21 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
         .use_lld = true,
     });
 
-    obj.want_lto = true;
+    obj.lto = .full;
 
     if (exe.link_amdsmi or exe.link_rocm or exe.link_cuda) {
         if (exe.link_amdsmi or exe.link_rocm) {
-            obj.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/lib" } });
-            obj.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/include" } });
+            obj.root_module.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/lib" } });
+            obj.root_module.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/include" } });
 
-            if (exe.link_amdsmi) obj.linkSystemLibrary("amd_smi");
-            if (exe.link_rocm) obj.linkSystemLibrary("rocm_smi64");
+            if (exe.link_amdsmi) obj.root_module.linkSystemLibrary("amd_smi", .{});
+            if (exe.link_rocm) obj.root_module.linkSystemLibrary("rocm_smi64", .{});
         }
 
         if (exe.link_cuda) {
-            obj.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/lib" } });
-            obj.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/include" } });
-            obj.linkSystemLibrary("nvidia-ml");
+            obj.root_module.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/lib" } });
+            obj.root_module.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/include" } });
+            obj.root_module.linkSystemLibrary("nvidia-ml", .{});
         }
     }
 
