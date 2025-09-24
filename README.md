@@ -107,7 +107,7 @@ for f in zig-out/bin/*; do
 done
 ```
 
-`*`: Run this command if you cloned from **AUR**
+`*`: Run this command if you cloned from **AUR**<br>
 `**`: Run this command if you cloned from **GitHub**
 
 ### Configuration
