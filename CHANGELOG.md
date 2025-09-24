@@ -2,6 +2,13 @@
 
 ### master
 
+- Up-to-date with `v1.3.0`
+
+## v1.x
+
+### v1.3.0
+
+- release: update to `1.3.0`
 - fix(updates): fix repeated calls in allocators
 - refactor(updates): code improvements
 - fix(updates): fix wrong allocator usage in `configData`
@@ -25,8 +32,6 @@
 - refactor(ping): remove domain ip update info
 - refactor(memory): replace deprecated `readAll()` function with new one
 - refactor(updates): update imports for clarity
-
-## v1.x
 
 ### v1.2.0
 
