@@ -2,6 +2,7 @@
 
 ### master
 
+- utils(waybar): replace `RTMIN+32` with `posix.sigrtmin()` function
 - fix(updates): fix wrong allocator usage in `arena_config`
 - fix(updates): fix allocator usage
 - refactor(updates): replace deprecated `fixedBufferStream()` function with new one

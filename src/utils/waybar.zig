@@ -53,5 +53,5 @@ pub fn pid() !?u32 {
 pub fn signal(code: u8) !void {
     const wpid = try pid();
 
-    if (wpid) |wwpid| try posix.kill(@intCast(wwpid), 32 + code);
+    if (wpid) |wwpid| try posix.kill(@intCast(wwpid), posix.sigrtmin() + code);
 }
