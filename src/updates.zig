@@ -209,6 +209,10 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
+    var arena_config = heap.ArenaAllocator.init(heap.page_allocator);
+    defer arena_config.deinit();
+    const allocator_config = arena.allocator();
+
     var err_buf: [512]u8 = undefined;
 
     var CHECK_INTERVAL: u64 = 160;
@@ -225,11 +229,11 @@ pub fn main() !void {
     }
 
     while (true) {
-        while (try resolveIp(allocator, "google.com", "80") == null) {
+        _ = arena.reset(.free_all);
+
+        while (try resolveIp(allocator_config, "google.com", "80") == null) {
             Thread.sleep(500 * time.ns_per_ms);
         }
-
-        _ = arena.reset(.free_all);
 
         const result = checkupdates(allocator);
         if (result) |updates_output| {
