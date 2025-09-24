@@ -2,6 +2,7 @@
 
 ### master
 
+- build: build: set `os_tag` to `linux`
 - build: update deprecated APIs, set target CPU to x86_64
 - utils(waybar): replace `RTMIN+32` with `posix.sigrtmin()` function
 - fix(updates): fix wrong allocator usage in `arena_config`
