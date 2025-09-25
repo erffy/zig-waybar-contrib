@@ -52,12 +52,12 @@ const MemoryInfo = struct {
     page_tables: u64 = 0,
     slab: u64 = 0,
 
-    pub inline fn json(this: @This(), w: anytype) !void {
+    pub inline fn json(this: @This(), writer: *io.Writer) !void {
         const total_usage = this.mem_used + this.swap_used;
         const denom = this.mem_total + this.swap_total;
         const pct: f64 = if (denom == 0) 0 else @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(denom)) * 100.0;
 
-        try w.print(
+        try writer.print(
             "{{\"text\":\"  {d:.0}% · {Bi:.2}\",\"tooltip\":\"Total · {Bi:.2}\\nUsed · {Bi:.2}\\nFree · {Bi:.2}\\nAvailable · {Bi:.2}\\nShared · {Bi:.2}\\nBuffer / Cache · {Bi:.2}\\n\\nActive · {Bi:.2}\\nInactive · {Bi:.2}\\nAnon Pages · {Bi:.2}\\nMapped · {Bi:.2}\\nDirty · {Bi:.2}\\nWriteback · {Bi:.2}\\nKernel Stack · {Bi:.2}\\nPage Tables · {Bi:.2}\\nSlab · {Bi:.2}\\n\\nSwap Total · {Bi:.2}\\nSwap Used · {Bi:.2}\\nSwap Free · {Bi:.2}\\nSwap Cached · {Bi:.2}\"}}",
             .{
                 pct,
