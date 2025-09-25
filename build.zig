@@ -79,6 +79,22 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
         .link_libc = true,
     });
 
+    if (exe.link_amdsmi or exe.link_rocm or exe.link_cuda) {
+        if (exe.link_amdsmi or exe.link_rocm) {
+            mod.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/lib" } });
+            mod.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/include" } });
+
+            if (exe.link_amdsmi) mod.linkSystemLibrary("amd_smi", .{});
+            if (exe.link_rocm) mod.linkSystemLibrary("rocm_smi64", .{});
+        }
+
+        if (exe.link_cuda) {
+            mod.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/lib" } });
+            mod.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/include" } });
+            mod.linkSystemLibrary("nvidia-ml", .{});
+        }
+    }
+
     const utils_mod = b.createModule(.{ .root_source_file = b.path("src/utils/mod.zig") });
 
     mod.addImport("utils", utils_mod);
@@ -92,22 +108,6 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
     });
 
     obj.lto = .full;
-
-    if (exe.link_amdsmi or exe.link_rocm or exe.link_cuda) {
-        if (exe.link_amdsmi or exe.link_rocm) {
-            obj.root_module.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/lib" } });
-            obj.root_module.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/rocm/include" } });
-
-            if (exe.link_amdsmi) obj.root_module.linkSystemLibrary("amd_smi", .{});
-            if (exe.link_rocm) obj.root_module.linkSystemLibrary("rocm_smi64", .{});
-        }
-
-        if (exe.link_cuda) {
-            obj.root_module.addLibraryPath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/lib" } });
-            obj.root_module.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "/opt/cuda/targets/x86_64-linux/include" } });
-            obj.root_module.linkSystemLibrary("nvidia-ml", .{});
-        }
-    }
 
     const install = b.addInstallArtifact(obj, .{});
     b.getInstallStep().dependOn(&install.step);

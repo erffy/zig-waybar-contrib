@@ -2,7 +2,7 @@
 
 ### master
 
-- Up-to-date with `v1.3.0`
+- build: simplify linking
 
 ## v1.x
 
