@@ -38,7 +38,7 @@ const static_executables = [_]Executable{
 };
 
 fn fileExists(path: []const u8) bool {
-    const file = fs.cwd().openFile(path, .{}) catch return false;
+    const file = fs.cwd().openFile(path, .{ .mode = .read_only }) catch return false;
     defer file.close();
     return true;
 }

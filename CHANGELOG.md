@@ -2,6 +2,7 @@
 
 ### master
 
+- build: use `ReadOnly` mode on `fileExists()` function
 - refactor(memory): use `@This()` instead of `MemoryInfo`
 - build: simplify linking
 
