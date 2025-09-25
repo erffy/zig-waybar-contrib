@@ -52,9 +52,9 @@ const MemoryInfo = struct {
     page_tables: u64 = 0,
     slab: u64 = 0,
 
-    pub inline fn json(self: MemoryInfo, w: anytype) !void {
-        const total_usage = self.mem_used + self.swap_used;
-        const denom = self.mem_total + self.swap_total;
+    pub inline fn json(this: @This(), w: anytype) !void {
+        const total_usage = this.mem_used + this.swap_used;
+        const denom = this.mem_total + this.swap_total;
         const pct: f64 = if (denom == 0) 0 else @as(f64, @floatFromInt(total_usage)) / @as(f64, @floatFromInt(denom)) * 100.0;
 
         try w.print(
@@ -62,25 +62,25 @@ const MemoryInfo = struct {
             .{
                 pct,
                 total_usage,
-                self.mem_total,
-                self.mem_used,
-                self.mem_free,
-                self.mem_available,
-                self.mem_shared,
-                self.mem_buff_cache,
-                self.active,
-                self.inactive,
-                self.anon_pages,
-                self.mapped,
-                self.dirty,
-                self.writeback,
-                self.kernel_stack,
-                self.page_tables,
-                self.slab,
-                self.swap_total,
-                self.swap_used,
-                self.swap_free,
-                self.swap_cached,
+                this.mem_total,
+                this.mem_used,
+                this.mem_free,
+                this.mem_available,
+                this.mem_shared,
+                this.mem_buff_cache,
+                this.active,
+                this.inactive,
+                this.anon_pages,
+                this.mapped,
+                this.dirty,
+                this.writeback,
+                this.kernel_stack,
+                this.page_tables,
+                this.slab,
+                this.swap_total,
+                this.swap_used,
+                this.swap_free,
+                this.swap_cached,
             },
         );
     }

@@ -2,6 +2,7 @@
 
 ### master
 
+- refactor(memory): use `@This()` instead of `MemoryInfo`
 - build: simplify linking
 
 ## v1.x
