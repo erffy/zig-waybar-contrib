@@ -1,4 +1,9 @@
 > [!IMPORTANT]
+> I'm currently on `(shit)` Windows, and the project won't receive any updates during this time.<br>
+> Working with Linux is a bit tedious, so I may switch to Linux<br>
+> in 3-4 months or sooner/later, at which point I will continue developing the project.
+
+> [!NOTE]
 > This project is in active development. As I'm learning Zig, updates may take time. Your contributions, feedback, and patience are greatly appreciated! 🚀
 
 ## zig-waybar-contrib [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://gnu.org/licenses/gpl-3.0) [![Zig](https://img.shields.io/badge/Zig-0.15.1+-orange.svg)](https://ziglang.org/) [![Waybar](https://img.shields.io/badge/Waybar-Compatible-green.svg)](https://github.com/Alexays/Waybar)
