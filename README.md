@@ -1,8 +1,3 @@
-> [!IMPORTANT]
-> I'm currently on `(shit)` Windows, and the project won't receive any updates during this time.<br>
-> Working with Linux is a bit tedious, so I may switch to Linux<br>
-> in 3-4 months or sooner/later, at which point I will continue developing the project.
-
 > [!NOTE]
 > This project is in active development. As I'm learning Zig, updates may take time. Your contributions, feedback, and patience are greatly appreciated! 🚀
 
