@@ -1,7 +1,7 @@
 > [!NOTE]
 > This project is in active development. As I'm learning Zig, updates may take time. Your contributions, feedback, and patience are greatly appreciated! 🚀
 
-## zig-waybar-contrib [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://gnu.org/licenses/gpl-3.0) [![Zig](https://img.shields.io/badge/Zig-0.15.1+-orange.svg)](https://ziglang.org/) [![Waybar](https://img.shields.io/badge/Waybar-Compatible-green.svg)](https://github.com/Alexays/Waybar)
+## zig-waybar-contrib [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://gnu.org/licenses/gpl-3.0) [![Zig](https://img.shields.io/badge/Zig-0.15.1+-orange.svg)](https://ziglang.org/)
 
 **High-performance Waybar modules written in Zig for efficient system monitoring**
 
@@ -9,13 +9,6 @@
 ### Overview
 
 `zig-waybar-contrib` is a collection of lightweight, blazingly fast Waybar modules built with Zig. These modules are designed to provide accurate system monitoring with minimal resource usage, taking advantage of Zig's performance characteristics and memory safety.
-
-### Why Zig?
-
-- **Zero-Cost Abstractions** - Runtime performance without sacrificing code clarity
-- **Compile-Time Safety** - Catch errors before they reach production
-- **Small Binaries** - Minimal overhead for system monitoring
-- **Fast Compilation** - Quick iteration during development
 
 ### Features
 
@@ -65,7 +58,7 @@
 #### [From AUR (Recommended)](https://aur.archlinux.org/packages/zig-waybar-contrib)
 
 You can easily install the latest version of **zig-waybar-contrib** from the AUR.
-This package provides pre-built binaries as `waybar-module-X-bin`.
+This package provides pre-built binaries as `waybar-module-X`.
 
 Use your preferred AUR helper:
 
@@ -112,10 +105,6 @@ done
 
 ### Configuration
 
-#### Basic Waybar Setup
-
-Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
-
 ```jsonc
 {
   // Load module configurations from zig-waybar-contrib
@@ -131,44 +120,6 @@ Add to your Waybar configuration (`~/.config/waybar/config.jsonc`):
     "custom/ping#zwc"
   ]
 }
-```
-
-### Development
-
-#### Project Structure
-
-```
-zig-waybar-contrib/
-│
-├── README.md               # Project overview, installation, and usage instructions
-├── CHANGELOG.md            # Version history with detailed changes per release
-├── LICENSE                 # Project license (GPL-3.0-only)
-├── config.waybar.jsonc     # Example Waybar module configuration (JSONC format)
-├── .gitignore              # Git exclusions for build artifacts, cache files, etc.
-│
-├── build.zig               # Zig build script for compiling all modules
-├── build.zig.zon           # Zig package and dependency declaration (Zon format)
-│
-├── tests/                  # Test files
-│
-├── src/                    # Source code
-│   │
-│   ├── utils/              # Shared utility modules
-│   │   ├── mod.zig         # Module loader and common interfaces
-│   │   └── waybar.zig      # Waybar signal sender (e.g., USR1/USR2 signaling)
-│   │
-│   ├── gpu/                # GPU statistics and backend integration
-│   │   ├── gpu.zig         # Unified GPU module (auto-selects backend at compile time)
-│   │   └── backend/        # Individual backend implementations
-│   │       ├── amdsmi.zig      # AMD SMI interface (ROCm 5.x+)
-│   │       ├── rocmsmi.zig     # Legacy ROCm SMI interface
-│   │       └── nvml.zig        # NVIDIA GPU interface (via NVML/CUDA)
-│   │
-│   ├── memory.zig          # Module for tracking and displaying memory usage
-│   ├── ping.zig            # Module for displaying ping/latency to a target host
-│   └── updates.zig         # Module for checking for system/package updates
-│
-└── assets/                 # Images, screenshots, and other media assets
 ```
 
 ### Contributing
