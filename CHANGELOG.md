@@ -2,6 +2,7 @@
 
 ### master
 
+- fix: fix type mismatch in getPid function
 - chore: remove unnecessary `utils` imports in gpu module
 - refactor: implement new tree changes in modules
 - build: import config and pid

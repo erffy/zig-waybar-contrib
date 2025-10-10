@@ -46,7 +46,7 @@ pub fn getPid(name: []const u8) !?linux.pid_t {
         const n = try file_reader.interface.readSliceShort(&name_buf);
         const proc_name = mem.trimEnd(u8, name_buf[0..n], "\n");
 
-        if (mem.eql(u8, proc_name, name)) return try fmt.parseInt(u32, entry.name, 10);
+        if (mem.eql(u8, proc_name, name)) return try fmt.parseInt(linux.pid_t, entry.name, 10);
     }
 
     return null;
