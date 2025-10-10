@@ -95,9 +95,11 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
         }
     }
 
-    const utils_mod = b.createModule(.{ .root_source_file = b.path("src/utils/mod.zig") });
+    const config_mod = b.createModule(.{ .root_source_file = b.path("src/core/config.zig") });
+    const pid_mod = b.createModule(.{ .root_source_file = b.path("src/core/pid.zig") });
 
-    mod.addImport("utils", utils_mod);
+    mod.addImport("config", config_mod);
+    mod.addImport("pid", pid_mod);
     mod.addImport("build_options", build_options.createModule());
 
     const obj = b.addExecutable(.{

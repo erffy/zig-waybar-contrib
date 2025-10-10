@@ -2,6 +2,7 @@
 
 ### master
 
+- build: import config and pid
 - build: update module sources
 - tree: move all modules to `modules/` directory
 - tree: move `utils/config.zig` to `core/config.zig`
