@@ -32,9 +32,9 @@ const Executable = struct {
 };
 
 const static_executables = [_]Executable{
-    .{ .name = "memory", .source = "src/memory.zig" },
-    .{ .name = "ping", .source = "src/ping.zig" },
-    .{ .name = "updates", .source = "src/updates.zig" },
+    .{ .name = "memory", .source = "src/modules/memory.zig" },
+    .{ .name = "ping", .source = "src/modules/ping.zig" },
+    .{ .name = "updates", .source = "src/modules/updates.zig" },
 };
 
 fn fileExists(path: []const u8) bool {
@@ -63,7 +63,7 @@ pub fn build(b: *Build) void {
     if (have_amdsmi or have_rocm or have_cuda) {
         buildExecutable(b, .{
             .name = "gpu",
-            .source = "src/gpu/gpu.zig",
+            .source = "src/modules/gpu/gpu.zig",
             .link_amdsmi = have_amdsmi,
             .link_rocm = have_rocm,
             .link_cuda = have_cuda,
