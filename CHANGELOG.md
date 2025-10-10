@@ -2,6 +2,7 @@
 
 ### master
 
+- build: add semantic version to executables
 - fix: fix type mismatch in getPid function
 - chore: remove unnecessary `utils` imports in gpu module
 - refactor: implement new tree changes in modules

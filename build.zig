@@ -107,6 +107,11 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
         .root_module = mod,
         .use_llvm = true,
         .use_lld = true,
+        .version = .{
+            .major = 1,
+            .minor = 4,
+            .patch = 0,
+        }
     });
 
     obj.lto = .full;
