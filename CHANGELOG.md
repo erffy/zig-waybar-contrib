@@ -2,6 +2,8 @@
 
 ### master
 
+- core(pid): improve code
+- utils(waybar): move to `core/pid.zig` and it has been made modular to avoid any issues when used anywhere.
 - refactor(memory): change paramater `w` to `writer` and define `*Io.Writer` type
 - build: use `ReadOnly` mode on `fileExists()` function
 - refactor(memory): use `@This()` instead of `MemoryInfo`

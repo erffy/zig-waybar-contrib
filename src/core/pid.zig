@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// along with this program. If not, see <https://gnu.org/licenses>.
 
 const std = @import("std");
 const fs = std.fs;
@@ -23,8 +23,10 @@ const ascii = std.ascii;
 const fmt = std.fmt;
 const mem = std.mem;
 const posix = std.posix;
+const os = std.os;
+const linux = os.linux;
 
-pub fn pid() !?u32 {
+pub fn getPid(name: []const u8) !?linux.pid_t {
     var dir = try fs.openDirAbsolute("/proc", .{ .iterate = true });
     defer dir.close();
 
@@ -36,7 +38,7 @@ pub fn pid() !?u32 {
         var path_buf: [64]u8 = undefined;
         const path = try fmt.bufPrint(&path_buf, "/proc/{s}/comm", .{entry.name});
 
-        const file = fs.openFileAbsolute(path, .{}) catch continue;
+        const file = fs.openFileAbsolute(path, .{ .mode = .read_only }) catch continue;
         defer file.close();
 
         var name_buf: [64]u8 = undefined;
@@ -44,14 +46,14 @@ pub fn pid() !?u32 {
         const n = try file_reader.interface.readSliceShort(&name_buf);
         const proc_name = mem.trimEnd(u8, name_buf[0..n], "\n");
 
-        if (mem.eql(u8, proc_name, "waybar")) return try fmt.parseInt(u32, entry.name, 10);
+        if (mem.eql(u8, proc_name, name)) return try fmt.parseInt(u32, entry.name, 10);
     }
 
     return null;
 }
 
-pub fn signal(code: u8) !void {
-    const wpid = try pid();
+pub fn signal(name: []const u8, code: u8) !void {
+    const wpid = try getPid(name);
 
-    if (wpid) |wwpid| try posix.kill(@intCast(wwpid), posix.sigrtmin() + code);
+    if (wpid) |wwpid| try posix.kill(@intCast(wwpid), linux.sigrtmin() + code);
 }
