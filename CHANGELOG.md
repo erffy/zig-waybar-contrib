@@ -1,6 +1,12 @@
-# Changelog
+# ChangeLog
 
+<!--
 ### master
+-->
+
+## v1.x
+
+### v1.4.0
 
 - build: add semantic version to executables
 - fix: fix type mismatch in getPid function
@@ -16,8 +22,6 @@
 - build: use `ReadOnly` mode on `fileExists()` function
 - refactor(memory): use `@This()` instead of `MemoryInfo`
 - build: simplify linking
-
-## v1.x
 
 ### v1.3.0
 
