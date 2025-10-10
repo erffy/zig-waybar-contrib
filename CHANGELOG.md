@@ -2,6 +2,8 @@
 
 ### master
 
+- tree: move all modules to `modules/` directory
+- tree: move `utils/config.zig` to `core/config.zig`
 - core(pid): improve code
 - utils(waybar): move to `core/pid.zig` and it has been made modular to avoid any issues when used anywhere.
 - refactor(memory): change paramater `w` to `writer` and define `*Io.Writer` type
