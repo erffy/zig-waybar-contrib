@@ -21,8 +21,6 @@ const std = @import("std");
 const io = std.io;
 const time = std.time;
 
-const utils = @import("utils");
-
 const c = @cImport({
     @cInclude("nvml.h");
 });

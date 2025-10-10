@@ -2,6 +2,7 @@
 
 ### master
 
+- chore: remove unnecessary `utils` imports in gpu module
 - refactor: implement new tree changes in modules
 - build: import config and pid
 - build: update module sources

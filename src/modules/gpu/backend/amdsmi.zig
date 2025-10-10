@@ -22,8 +22,6 @@ const io = std.io;
 const time = std.time;
 const heap = std.heap;
 
-const utils = @import("utils");
-
 const c = @cImport({
     @cInclude("amd_smi/amdsmi.h");
 });

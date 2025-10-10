@@ -27,8 +27,6 @@ const posix = std.posix;
 const heap = std.heap;
 const Allocator = mem.Allocator;
 
-const utils = @import("utils");
-
 const c = @cImport({
     @cInclude("rocm_smi/rocm_smi.h");
 });
