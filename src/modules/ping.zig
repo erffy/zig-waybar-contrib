@@ -30,9 +30,8 @@ const fmt = std.fmt;
 const Thread = std.Thread;
 const Allocator = mem.Allocator;
 
-const utils = @import("utils");
-const waybar = utils.waybar;
-const readConfig = utils.config.readConfig;
+const pid = @import("pid");
+const config = @import("config");
 
 const PingError = error{
     Timeout,
@@ -189,11 +188,11 @@ pub fn main() !void {
         .TIMEOUT_MS = 10000,
     };
 
-    const configData = try readConfig(allocator, "ping.json");
-    if (configData) |config| {
-        defer config.deinit();
+    const configData = try config.readConfig(allocator, "ping.json");
+    if (configData) |cfg| {
+        defer cfg.deinit();
 
-        const config_obj = config.value.object;
+        const config_obj = cfg.value.object;
         if (config_obj.get("TARGET_DOMAIN")) |target_domain_value| {
             const target_domain_str = target_domain_value.string;
             if (target_domain_str.len >= 4) data.TARGET_DOMAIN = try allocator.dupeZ(u8, target_domain_str);
@@ -230,7 +229,7 @@ pub fn main() !void {
 
         try result.format(stdout);
         try stdout.writeByte('\n');
-        try waybar.signal(14);
+        try pid.signal("waybar", 14);
 
         try stdout.flush();
 

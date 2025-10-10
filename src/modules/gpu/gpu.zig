@@ -23,8 +23,7 @@ const time = std.time;
 const fs = std.fs;
 const Thread = std.Thread;
 
-const utils = @import("utils");
-const waybar = utils.waybar;
+const pid = @import("pid");
 
 const bo = @import("build_options");
 
@@ -53,7 +52,7 @@ pub fn main() !void {
 
         try gpu_info.json(stdout);
         try stdout.writeByte('\n');
-        try waybar.signal(11);
+        try pid.signal("waybar", 11);
 
         try stdout.flush();
 

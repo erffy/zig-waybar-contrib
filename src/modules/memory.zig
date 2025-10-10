@@ -26,8 +26,7 @@ const fmt = std.fmt;
 const StaticStringMap = std.StaticStringMap;
 const Thread = std.Thread;
 
-const utils = @import("utils");
-const waybar = utils.waybar;
+const pid = @import("pid");
 
 const MemoryInfo = struct {
     mem_total: u64 = 0,
@@ -210,7 +209,7 @@ pub fn main() !void {
 
         try mem_info.json(stdout);
         try stdout.writeByte('\n');
-        try waybar.signal(12);
+        try pid.signal("waybar", 12);
 
         try stdout.flush();
 

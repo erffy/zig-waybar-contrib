@@ -33,11 +33,11 @@ const ArrayList = std.ArrayList;
 const Thread = std.Thread;
 const Allocator = mem.Allocator;
 
-const utils = @import("utils");
+const pid = @import("pid");
+const config = @import("config");
+
 const ping = @import("ping.zig");
-const waybar = utils.waybar;
-const config = utils.config;
-const readConfig = config.readConfig;
+
 const resolveIp = ping.resolveIP;
 
 const BUFFER_SIZE = 4096;
@@ -217,7 +217,7 @@ pub fn main() !void {
 
     var CHECK_INTERVAL: u64 = 160;
 
-    const configData = try readConfig(allocator_config, "updates.json");
+    const configData = try config.readConfig(allocator_config, "updates.json");
     if (configData) |cfg| {
         defer cfg.deinit();
 
@@ -283,7 +283,7 @@ pub fn main() !void {
         }
 
         try stdout.writeByte('\n');
-        try waybar.signal(10);
+        try pid.signal("waybar", 10);
 
         try stdout.flush();
 

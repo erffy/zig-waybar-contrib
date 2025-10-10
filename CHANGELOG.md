@@ -2,6 +2,7 @@
 
 ### master
 
+- refactor: implement new tree changes in modules
 - build: import config and pid
 - build: update module sources
 - tree: move all modules to `modules/` directory
