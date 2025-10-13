@@ -1,8 +1,10 @@
 # ChangeLog
 
-<!--
-### master
--->
+### master (v1.4.1)
+
+- build: create module for `network`
+- modules: update module files that uses `resolveIP()` function from `ping` module
+- core(network): move `resolveIP()` function to here
 
 ## v1.x
 

@@ -35,10 +35,7 @@ const Allocator = mem.Allocator;
 
 const pid = @import("pid");
 const config = @import("config");
-
-const ping = @import("ping.zig");
-
-const resolveIp = ping.resolveIP;
+const network = @import("network");
 
 const BUFFER_SIZE = 4096;
 const MAX_VERSION_LENGTH = 20;
@@ -231,7 +228,7 @@ pub fn main() !void {
     while (true) {
         _ = arena.reset(.free_all);
 
-        while (try resolveIp(allocator_config, "google.com", "80") == null) {
+        while (try network.resolveIP(allocator_config, "google.com", "80") == null) {
             Thread.sleep(500 * time.ns_per_ms);
         }
 
