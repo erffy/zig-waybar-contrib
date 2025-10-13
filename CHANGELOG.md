@@ -10,6 +10,7 @@
 
 ### v1.4.0
 
+- release: update to `1.4.0`
 - build: add semantic version to executables
 - fix: fix type mismatch in getPid function
 - chore: remove unnecessary `utils` imports in gpu module
