@@ -39,8 +39,6 @@ const PingError = error{
     NetworkError,
 };
 
-const BUFFER_SIZE = 64;
-
 const Data = struct {
     TARGET_DOMAIN: []const u8,
     TARGET_IP: []const u8,
@@ -92,27 +90,22 @@ noinline fn ping(buffer: []u8, data: Data) !i64 {
     const socket = try posix.socket(posix.AF.INET, posix.SOCK.DGRAM, posix.IPPROTO.ICMP);
     defer posix.close(socket);
 
-    const timeout = posix.timeval{
+    try posix.setsockopt(socket, posix.SOL.SOCKET, posix.SO.RCVTIMEO, mem.asBytes(&posix.timeval{
         .sec = @intCast(@divExact(data.TIMEOUT_MS, 1000)),
         .usec = @intCast((@mod(data.TIMEOUT_MS, 1000)) * 1000),
-    };
+    }));
 
-    try posix.setsockopt(socket, posix.SOL.SOCKET, posix.SO.RCVTIMEO, mem.asBytes(&timeout));
-
-    const addr = try net.Address.parseIp4(data.TARGET_IP, 0);
+    const addr: net.Address = try .parseIp4(data.TARGET_IP, 0);
 
     const start_time = time.milliTimestamp();
 
     _ = try posix.sendto(socket, buffer, 0, &addr.any, addr.getOsSockLen());
-
-    const recv_result = posix.recvfrom(socket, buffer, 0, null, null) catch |err| {
+    _ = posix.recvfrom(socket, buffer, 0, null, null) catch |err| {
         if (err == error.WouldBlock) return PingError.Timeout;
         return PingError.NetworkError;
     };
-    _ = recv_result;
 
-    const latency = time.milliTimestamp() - start_time;
-    return latency;
+    return time.milliTimestamp() - start_time;
 }
 
 const UpdateIPArguments = struct {
@@ -150,7 +143,7 @@ pub fn main() !void {
     var stdout_writer = fs.File.stdout().writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
 
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    var arena: heap.ArenaAllocator = .init(heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
@@ -186,7 +179,7 @@ pub fn main() !void {
             continue;
         }
 
-        var buffer: [BUFFER_SIZE]u8 = undefined;
+        var buffer: [64]u8 = undefined;
         createIcmpPacket(&buffer);
 
         const latency = ping(&buffer, data) catch |err| switch (err) {
