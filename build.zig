@@ -112,7 +112,7 @@ fn buildExecutable(b: *Build, exe: Executable, target: Build.ResolvedTarget, opt
         .version = .{
             .major = 1,
             .minor = 4,
-            .patch = 0,
+            .patch = 1,
         }
     });
 
