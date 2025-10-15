@@ -24,11 +24,13 @@ const heap = std.heap;
 const io = std.io;
 const sort = std.sort;
 const fs = std.fs;
+const os = std.os;
 const ascii = std.ascii;
 const math = std.math;
 const posix = std.posix;
 const time = std.time;
 const fmt = std.fmt;
+const linux = os.linux;
 const ArrayList = std.ArrayList;
 const Thread = std.Thread;
 const Allocator = mem.Allocator;
@@ -119,11 +121,10 @@ inline fn parseLine(line: []const u8, info: *UpdateInfo) bool {
 
 noinline fn checkupdates(allocator: Allocator) ![]u8 {
     const tmp_base = posix.getenv("TMPDIR") orelse "/tmp";
+    const uid = linux.geteuid();
 
-    const uid = try fmt.allocPrint(allocator, "{}", .{posix.geteuid()});
-
-    var db_path_buf: [fs.max_path_bytes]u8 = undefined;
-    const db_path = try fmt.bufPrint(&db_path_buf, "{s}/checkup-db-{s}", .{ tmp_base, uid });
+    var db_path_buf: [linux.PATH_MAX]u8 = undefined;
+    const db_path = try fmt.bufPrint(&db_path_buf, "{s}/checkup-db-{d}", .{ tmp_base, uid });
 
     _ = fs.openDirAbsolute(db_path, .{}) catch |err| switch (err) {
         error.FileNotFound => try fs.makeDirAbsolute(db_path),
@@ -132,7 +133,7 @@ noinline fn checkupdates(allocator: Allocator) ![]u8 {
 
     defer fs.deleteTreeAbsolute(db_path) catch {};
 
-    var tmp_local_buf: [fs.max_path_bytes]u8 = undefined;
+    var tmp_local_buf: [linux.PATH_MAX]u8 = undefined;
     const tmp_local = try fmt.bufPrint(&tmp_local_buf, "{s}/local", .{db_path});
 
     fs.symLinkAbsolute("/var/lib/pacman/local", tmp_local, .{}) catch |err| switch (err) {

@@ -1,7 +1,9 @@
-# ChangeLog
+# CHANGELOG
 
 ### master (v1.4.1)
 
+- refactor(updates): remove unnecessary `EUID` allocating
+- refactor(updates): replace `fs.max_path_bytes` with `linux.MAX_PATH`
 - chore(ping): improve code quality
 - build: create module for `network`
 - modules: update module files that uses `resolveIP()` function from `ping` module
