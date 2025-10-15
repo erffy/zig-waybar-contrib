@@ -37,20 +37,13 @@ pub const GPUInfo = struct {
     pub inline fn json(this: @This(), writer: *io.Writer) !void {
         try writer.print(
             "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {Bi:.2}\\nVRAM Used · {Bi:.2}\\nVRAM Free · {Bi:.2}\"}}",
-            .{
-                this.gpu_busy,
-                @as(i64, @intFromFloat(this.temperature)),
-                this.pwm,
-                this.mem_total,
-                this.mem_used,
-                this.mem_free,
-            },
+            .{ this.gpu_busy, @as(i64, @intFromFloat(this.temperature)), this.pwm, this.mem_total, this.mem_used, this.mem_free },
         );
     }
 };
 
 pub fn initialize() !c.amdsmi_processor_handle {
-    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    var arena: heap.ArenaAllocator = .init(heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
@@ -61,7 +54,6 @@ pub fn initialize() !c.amdsmi_processor_handle {
     if (socket_count == 0) return error.NoDevicesFound;
 
     const sockets = try allocator.alloc(c.amdsmi_socket_handle, socket_count);
-    defer allocator.free(sockets);
     _ = c.amdsmi_get_socket_handles(&socket_count, sockets.ptr);
 
     var proc_count: u32 = 0;
@@ -69,7 +61,6 @@ pub fn initialize() !c.amdsmi_processor_handle {
     if (proc_count == 0) return error.NoDevicesFound;
 
     const procs = try allocator.alloc(c.amdsmi_processor_handle, proc_count);
-    defer allocator.free(procs);
     _ = c.amdsmi_get_processor_handles(sockets[0], &proc_count, procs.ptr);
 
     return procs[0];

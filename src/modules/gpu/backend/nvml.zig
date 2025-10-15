@@ -36,14 +36,7 @@ pub const GPUInfo = struct {
     pub inline fn json(this: @This(), writer: *io.Writer) !void {
         try writer.print(
             "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {Bi:.2}\\nVRAM Used · {Bi:.2}\\nVRAM Free · {Bi:.2}\"}}",
-            .{
-                this.gpu_busy,
-                @as(i64, @intFromFloat(this.temperature)),
-                this.pwm,
-                this.mem_total,
-                this.mem_used,
-                this.mem_free,
-            },
+            .{ this.gpu_busy, @as(i64, @intFromFloat(this.temperature)), this.pwm, this.mem_total, this.mem_used, this.mem_free },
         );
     }
 };

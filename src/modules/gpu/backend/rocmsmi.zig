@@ -46,14 +46,7 @@ pub const GPUInfo = struct {
     pub inline fn json(this: @This(), writer: *io.Writer) !void {
         try writer.print(
             "{{\"text\":\"  {d}% · {d}°C\",\"tooltip\":\"PWM · {d}%\\nVRAM Total · {Bi:.2}\\nVRAM Used · {Bi:.2}\\nVRAM Free · {Bi:.2}\"}}",
-            .{
-                this.gpu_busy,
-                @as(i64, @intFromFloat(this.temperature)),
-                this.pwm,
-                this.mem_total,
-                this.mem_used,
-                this.mem_free,
-            },
+            .{ this.gpu_busy, @as(i64, @intFromFloat(this.temperature)), this.pwm, this.mem_total, this.mem_used, this.mem_free },
         );
     }
 };
@@ -124,7 +117,7 @@ pub fn getGPUInfo(device_id: u32) !GPUInfo {
     if (mem_total_result == c.RSMI_STATUS_SUCCESS) mem_total = total;
 
     const mem_free = if (mem_total > mem_used) mem_total - mem_used else 0;
-    
+
     const fan_result = c.rsmi_dev_fan_speed_get(device_id, 0, &fan_speed);
     const fan_max_result = c.rsmi_dev_fan_speed_max_get(device_id, 0, &fan_max);
 
