@@ -1,5 +1,10 @@
+> [!IMPORTANT]
+> Starting with Zig 0.16, the major version of the project will now be incremented by 1 with each Zig release.<br/>
+> This aims to eliminate confusion about which version uses which Zig version.
+
 > [!NOTE]
-> This project is in active development. As I'm learning Zig, updates may take time. Your contributions, feedback, and patience are greatly appreciated! 🚀
+> This project is in active development. As I'm learning Zig, updates may take time.<br/>
+> Your contributions, feedback, and patience are greatly appreciated! 🚀
 
 ## zig-waybar-contrib [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://gnu.org/licenses/gpl-3.0) [![Zig](https://img.shields.io/badge/Zig-0.15.1+-orange.svg)](https://ziglang.org/)
 
