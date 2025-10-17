@@ -1,16 +1,9 @@
 # CHANGELOG
-<!--
-### master (v1.4.1)
 
-- release: update to 1.4.1
-- refactor(gpu): remove unnecessary `free()` functions
-- refactor(updates): remove unnecessary `EUID` allocating
-- refactor(updates): replace `fs.max_path_bytes` with `linux.MAX_PATH`
-- chore(ping): improve code quality
-- build: create module for `network`
-- modules: update module files that uses `resolveIP()` function from `ping` module
-- core(network): move `resolveIP()` function to here
--->
+### master (v1.4.2)
+
+- core(config): replace deprecated `readAll()` function with new one
+
 ## v1.x
 
 ### v1.4.1

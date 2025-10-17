@@ -37,7 +37,8 @@ pub fn readConfig(allocator: Allocator, config_name: []const u8) !?json.Parsed(j
 
     const file_size = try file.getEndPos();
     const buffer = try allocator.alloc(u8, file_size);
-    _ = try file.readAll(buffer);
+    var f_reader = file.reader(&.{});
+    _ = try f_reader.interface.readSliceShort(buffer);
 
     return try json.parseFromSlice(json.Value, allocator, buffer, .{});
 }
