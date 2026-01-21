@@ -17,22 +17,29 @@
 
 Whether you need to monitor precision fan speeds, track compilation latency with pings, or watch your memory usage without eating it up, `zig-waybar-contrib` has you covered.
 
+### Community
+
+Join our Discord server for updates, support and discussion:<br>
+[![Discord](https://img.shields.io/badge/discord-gray?style=for-the-badge&logo=discord)](https://discord.gg/tb8MvnnSfZ)
+
 ### Modules
 
 | Module      | Description                            |
 |:------------|:---------------------------------------|
 | **CPU**     | Displays per-core CPU usage            |
 | **Fan**     | Monitors fan speeds                    |
+| **GPU**     | Monitors GPU usage and temperature     |
 | **Memory**  | Reports RAM usage and statistics       |
+| **Network** | Monitors network traffic and speed     |
 | **Ping**    | Measures network latency               |
 | **Updates** | Tracks system package updates          |
 
-See [MODULES](MODULES.md) for detailed documentation on each module.
+See [MODULES](https://codeberg.org/erffy/zig-waybar-contrib/src/branch/0.16.x-staging/MODULES.md) for detailed documentation on each module.
 
 ### Installation
 
 ![Repology](https://repology.org/badge/vertical-allrepos/zig-waybar-contrib.svg)
-![Repology](https://repology.org/badge/vertical-allrepos/zig-waybar-contrib-beta-bin.svg)
+![Repology](https://repology.org/badge/vertical-allrepos/zig-waybar-contrib-beta.svg)
 
 > [!NOTE]
 > To try the Nightly versions, follow `Script Installation` section.<br>
